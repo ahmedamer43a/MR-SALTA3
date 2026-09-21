@@ -35,6 +35,36 @@
 
     --light-bg: #eaf8f7;
 
+    --bg-gradient: linear-gradient(180deg, #70dce1 0%, #209ba5 45%, #064f5b 100%);
+
+    --card-bg: rgba(255, 255, 255, 0.90);
+
+    --row-bg: #edf9f8;
+
+    --border-color: #d4e9e8;
+}
+
+/* ================= DARK MODE VARIABLES ================= */
+
+body.dark-mode {
+
+    --ocean-dark: #91e5ee;
+
+    --ocean: #42c3d1;
+
+    --ocean-light: #2da1ae;
+
+    --text: #e0f7f6;
+
+    --light-bg: #0d272c;
+
+    --bg-gradient: linear-gradient(180deg, #071f25 0%, #08323a 50%, #031115 100%);
+
+    --card-bg: rgba(10, 35, 42, 0.90);
+
+    --row-bg: #0e333a;
+
+    --border-color: #174c56;
 }
 
 
@@ -51,15 +81,11 @@ body {
 
     color: var(--text);
 
-    background:
-        linear-gradient(
-            180deg,
-            #70dce1 0%,
-            #209ba5 45%,
-            #064f5b 100%
-        );
+    background: var(--bg-gradient);
 
     overflow-x: hidden;
+
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
 
@@ -279,6 +305,54 @@ body {
 }
 
 
+/* ================= HEADER ACTIONS ================= */
+
+.header-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.action-btn {
+
+    background: rgba(255, 255, 255, 0.25);
+
+    border: none;
+
+    color: white;
+
+    font-size: 18px;
+
+    width: 40px;
+
+    height: 40px;
+
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    backdrop-filter: blur(10px);
+
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+
+    background: rgba(255, 255, 255, 0.4);
+
+    transform: scale(1.05);
+}
+
+
 /* ================= LANGUAGE ================= */
 
 .language-switch {
@@ -334,7 +408,7 @@ body {
         white;
 
     color:
-        var(--ocean-dark);
+        #063b45;
 }
 
 
@@ -351,6 +425,8 @@ body {
 
     gap:
         25px;
+
+    transition: all 0.3s ease;
 }
 
 
@@ -360,7 +436,7 @@ body {
 .settings-card {
 
     background:
-        rgba(255, 255, 255, 0.90);
+        var(--card-bg);
 
     border-radius:
         30px;
@@ -374,6 +450,67 @@ body {
 
     backdrop-filter:
         blur(15px);
+
+    transition: background 0.4s ease;
+
+    position: relative;
+}
+
+
+/* ================= ZEN MODE ================= */
+
+body.zen-mode .header,
+body.zen-mode .settings-card {
+
+    display: none !important;
+}
+
+body.zen-mode .app-layout {
+
+    grid-template-columns: 1fr;
+
+    max-width: 650px;
+
+    margin: 40px auto 0;
+}
+
+.exit-zen-btn {
+
+    display: none;
+
+    position: absolute;
+
+    top: 20px;
+
+    right: 20px;
+
+    background: var(--coral);
+
+    color: white;
+
+    border: none;
+
+    padding: 8px 16px;
+
+    border-radius: 20px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    z-index: 10;
+}
+
+html[dir="rtl"] .exit-zen-btn {
+
+    right: auto;
+
+    left: 20px;
+}
+
+body.zen-mode .exit-zen-btn {
+
+    display: block;
 }
 
 
@@ -692,7 +829,9 @@ body {
         center;
 
     color:
-        #57757a;
+        var(--text);
+
+    opacity: 0.8;
 
     font-size:
         14px;
@@ -707,7 +846,7 @@ body {
         10px;
 
     background:
-        #d9eeee;
+        var(--row-bg);
 
     border-radius:
         20px;
@@ -803,17 +942,22 @@ body {
 .main-btn {
 
     background:
-        var(--ocean-dark);
+        #063b45;
 
     color:
         white;
+}
+
+body.dark-mode .main-btn {
+    background: var(--ocean);
+    color: #063b45;
 }
 
 
 .secondary-btn {
 
     background:
-        #e2f2f1;
+        var(--row-bg);
 
     color:
         var(--ocean-dark);
@@ -870,11 +1014,14 @@ body {
         7px;
 
     color:
-        #557176;
+        var(--text);
+
+    opacity: 0.8;
 }
 
 
-.input-box input {
+.input-box input,
+.custom-select {
 
     width:
         100%;
@@ -884,7 +1031,7 @@ body {
 
     border:
         2px solid
-        #d4e9e8;
+        var(--border-color);
 
     border-radius:
         13px;
@@ -893,7 +1040,7 @@ body {
         0 13px;
 
     font-size:
-        16px;
+        15px;
 
     color:
         var(--ocean-dark);
@@ -902,11 +1049,13 @@ body {
         none;
 
     background:
-        white;
+        var(--card-bg);
+
+    transition: border-color 0.2s;
 }
 
-
-.input-box input:focus {
+.input-box input:focus,
+.custom-select:focus {
 
     border-color:
         var(--ocean-light);
@@ -953,7 +1102,7 @@ body {
         14px;
 
     background:
-        #edf9f8;
+        var(--row-bg);
 
     border-radius:
         16px;
@@ -989,7 +1138,9 @@ body {
         11px;
 
     color:
-        #668084;
+        var(--text);
+
+    opacity: 0.7;
 }
 
 
@@ -1115,7 +1266,7 @@ body {
 .stat {
 
     background:
-        #edf9f8;
+        var(--row-bg);
 
     border-radius:
         17px;
@@ -1137,7 +1288,9 @@ body {
         12px;
 
     color:
-        #688084;
+        var(--text);
+
+    opacity: 0.7;
 
     font-weight:
         700;
@@ -1154,6 +1307,99 @@ body {
 
     color:
         var(--ocean-dark);
+}
+
+
+/* ================= HISTORY SECTION ================= */
+
+.history-section {
+
+    margin-top: 25px;
+
+    background: var(--row-bg);
+
+    border-radius: 17px;
+
+    padding: 16px;
+}
+
+.history-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: 12px;
+}
+
+.history-header h3 {
+
+    font-size: 14px;
+
+    color: var(--ocean-dark);
+}
+
+.clear-btn {
+
+    background: transparent;
+
+    border: none;
+
+    color: var(--coral);
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.clear-btn:hover {
+
+    text-decoration: underline;
+}
+
+.history-list {
+
+    list-style: none;
+
+    max-height: 140px;
+
+    overflow-y: auto;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.history-item {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    font-size: 12px;
+
+    padding: 8px 10px;
+
+    background: var(--card-bg);
+
+    border-radius: 10px;
+
+    border: 1px solid var(--border-color);
+}
+
+.history-item-time {
+
+    color: var(--text);
+
+    opacity: 0.7;
 }
 
 
@@ -1181,6 +1427,13 @@ body {
 
     color:
         #735d37;
+}
+
+body.dark-mode .tip {
+
+    background: #332b1a;
+
+    color: #fce3b3;
 }
 
 

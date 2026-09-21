@@ -5,13 +5,9 @@
     <meta name="google-site-verification" content="Du2sq9oNDRl0sGVVX6qxY4wj94XJ8X3qknvQCb8QY2w" />
     <meta name="description" content="MR SALTA3 is a fun and simple Pomodoro study timer with study sessions, breaks, statistics, and customizable alarms.">
     <meta name="keywords" content="Mr Salta3, Pomodoro timer, study timer, تايمر مذاكرة, مستر سلطع">
-    <meta property="og:title" content="MR SALTA3 - Study Timer">
-    <meta property="og:description" content="MR SALTA3 is a fun and simple Pomodoro study timer with study sessions and customizable alarms.">
-    <meta property="og:type" content="website">
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>MR SALTA3 - Study Timer</title>
 
@@ -48,26 +44,30 @@
             </div>
 
 
-            <div class="language-switch">
+            <div class="header-actions">
 
-                <button
-                    id="enBtn"
-                    class="language-btn active"
-                    type="button">
-
-                    EN
-
+                <!-- Theme Toggle Button -->
+                <button id="themeToggleBtn" class="action-btn" type="button" title="Toggle Theme">
+                    🌙
                 </button>
 
-
-                <button
-                    id="arBtn"
-                    class="language-btn"
-                    type="button">
-
-                    AR
-
+                <!-- Zen Mode Button -->
+                <button id="zenModeBtn" class="action-btn" type="button" title="Zen Mode">
+                    🖥️
                 </button>
+
+                <!-- Language Switcher -->
+                <div class="language-switch">
+
+                    <button id="enBtn" class="language-btn active" type="button">
+                        EN
+                    </button>
+
+                    <button id="arBtn" class="language-btn" type="button">
+                        AR
+                    </button>
+
+                </div>
 
             </div>
 
@@ -82,16 +82,19 @@
 
             <!-- ================= TIMER CARD ================= -->
 
-            <section class="timer-card">
+            <section class="timer-card" id="timerCard">
+
+                <!-- Exit Zen Mode Button (Hidden by default) -->
+                <button id="exitZenBtn" class="exit-zen-btn" type="button">
+                    ✕ Exit Zen Mode
+                </button>
 
 
                 <!-- CRAB -->
 
                 <div class="character-area">
 
-                    <div
-                        class="crab"
-                        id="crab">
+                    <div class="crab" id="crab">
 
 
                         <div class="eye eye-left">
@@ -128,9 +131,7 @@
 
                 <!-- MODE -->
 
-                <div
-                    class="mode"
-                    id="mode">
+                <div class="mode" id="mode">
 
                     STUDY TIME
 
@@ -140,9 +141,7 @@
 
                 <!-- TIMER -->
 
-                <div
-                    class="timer"
-                    id="timer">
+                <div class="timer" id="timer">
 
                     25:00
 
@@ -152,9 +151,7 @@
 
                 <!-- STATUS -->
 
-                <div
-                    class="status"
-                    id="status">
+                <div class="status" id="status">
 
                     Set your time and press Start.
 
@@ -166,9 +163,7 @@
 
                 <div class="progress-container">
 
-                    <div
-                        class="progress-bar"
-                        id="progressBar">
+                    <div class="progress-bar" id="progressBar">
 
                     </div>
 
@@ -181,30 +176,21 @@
                 <div class="controls">
 
 
-                    <button
-                        id="startBtn"
-                        class="main-btn"
-                        type="button">
+                    <button id="startBtn" class="main-btn" type="button">
 
                         ▶ Start
 
                     </button>
 
 
-                    <button
-                        id="pauseBtn"
-                        class="secondary-btn"
-                        type="button">
+                    <button id="pauseBtn" class="secondary-btn" type="button">
 
                         ⏸ Pause
 
                     </button>
 
 
-                    <button
-                        id="resetBtn"
-                        class="secondary-btn"
-                        type="button">
+                    <button id="resetBtn" class="secondary-btn" type="button">
 
                         ↻ Reset
 
@@ -219,7 +205,7 @@
 
             <!-- ================= SETTINGS ================= -->
 
-            <section class="settings-card">
+            <section class="settings-card" id="settingsCard">
 
 
                 <h2 id="settingsTitle">
@@ -239,12 +225,7 @@
                             Study Minutes
                         </label>
 
-                        <input
-                            id="studyInput"
-                            type="number"
-                            min="1"
-                            max="180"
-                            value="25">
+                        <input id="studyInput" type="number" min="1" max="180" value="25">
 
                     </div>
 
@@ -258,12 +239,7 @@
                             Short Break
                         </label>
 
-                        <input
-                            id="shortInput"
-                            type="number"
-                            min="1"
-                            max="60"
-                            value="5">
+                        <input id="shortInput" type="number" min="1" max="60" value="5">
 
                     </div>
 
@@ -277,12 +253,7 @@
                             Long Break
                         </label>
 
-                        <input
-                            id="longInput"
-                            type="number"
-                            min="1"
-                            max="120"
-                            value="15">
+                        <input id="longInput" type="number" min="1" max="120" value="15">
 
                     </div>
 
@@ -296,12 +267,7 @@
                             Sessions Before Long Break
                         </label>
 
-                        <input
-                            id="sessionsInput"
-                            type="number"
-                            min="1"
-                            max="20"
-                            value="4">
+                        <input id="sessionsInput" type="number" min="1" max="20" value="4">
 
                     </div>
 
@@ -309,18 +275,29 @@
 
                     <!-- ALARM REPEAT -->
 
-                    <div class="input-box full-width">
+                    <div class="input-box">
 
                         <label id="alarmLabel">
                             Alarm Repetitions
                         </label>
 
-                        <input
-                            id="alarmInput"
-                            type="number"
-                            min="1"
-                            max="20"
-                            value="3">
+                        <input id="alarmInput" type="number" min="1" max="20" value="3">
+
+                    </div>
+
+                    <!-- ALARM SELECTOR -->
+
+                    <div class="input-box">
+
+                        <label id="soundSelectLabel">
+                            Alarm Sound
+                        </label>
+
+                        <select id="soundSelect" class="custom-select">
+                            <option value="default">Mr Salta3 (Default)</option>
+                            <option value="digital">Digital Beep</option>
+                            <option value="bell">Classic Bell</option>
+                        </select>
 
                     </div>
 
@@ -352,9 +329,7 @@
 
                         <label class="switch">
 
-                            <input
-                                type="checkbox"
-                                id="autoBreak">
+                            <input type="checkbox" id="autoBreak">
 
                             <span class="slider"></span>
 
@@ -383,9 +358,35 @@
 
                         <label class="switch">
 
-                            <input
-                                type="checkbox"
-                                id="autoStudy">
+                            <input type="checkbox" id="autoStudy">
+
+                            <span class="slider"></span>
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- NOTIFICATIONS TOGGLE -->
+
+                    <div class="toggle-row">
+
+                        <div class="toggle-info">
+
+                            <strong id="notifTitle">
+                                Browser Notifications
+                            </strong>
+
+                            <small id="notifText">
+                                Get notified when phase ends
+                            </small>
+
+                        </div>
+
+
+                        <label class="switch">
+
+                            <input type="checkbox" id="notifToggle">
 
                             <span class="slider"></span>
 
@@ -430,6 +431,21 @@
                 </div>
 
 
+                <!-- ================= HISTORY / LOG ================= -->
+
+                <div class="history-section">
+
+                    <div class="history-header">
+                        <h3 id="historyTitle">Today's Sessions</h3>
+                        <button id="clearHistoryBtn" class="clear-btn" type="button">Clear</button>
+                    </div>
+
+                    <ul id="historyList" class="history-list">
+                        <!-- History items will be dynamically inserted here -->
+                    </ul>
+
+                </div>
+
 
                 <!-- TIP -->
 
@@ -453,22 +469,8 @@
 
     <!-- ================= AUDIO ================= -->
 
-    <!--
-        Put your own alarm here:
-
-        MR-SALTA3/
-        └── sounds/
-            └── alarm.mp3
-    -->
-
-    <audio
-        id="alarmSound"
-        preload="auto">
-
-        <source
-            src="sounds/alarm.mp3.mpeg"
-            type="audio/mpeg">
-
+    <audio id="alarmSound" preload="auto">
+        <source src="sounds/alarm.mp3.mpeg" type="audio/mpeg">
     </audio>
 
 

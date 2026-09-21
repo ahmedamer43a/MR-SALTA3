@@ -36,6 +36,18 @@ const pauseBtn =
 const resetBtn =
     document.getElementById("resetBtn");
 
+const themeToggleBtn =
+    document.getElementById("themeToggleBtn");
+
+const zenModeBtn =
+    document.getElementById("zenModeBtn");
+
+const exitZenBtn =
+    document.getElementById("exitZenBtn");
+
+const clearHistoryBtn =
+    document.getElementById("clearHistoryBtn");
+
 
 /* INPUTS */
 
@@ -54,6 +66,9 @@ const sessionsInput =
 const alarmInput =
     document.getElementById("alarmInput");
 
+const soundSelect =
+    document.getElementById("soundSelect");
+
 
 /* TOGGLES */
 
@@ -63,14 +78,20 @@ const autoBreak =
 const autoStudy =
     document.getElementById("autoStudy");
 
+const notifToggle =
+    document.getElementById("notifToggle");
 
-/* STATS */
+
+/* STATS & HISTORY */
 
 const completedSessions =
     document.getElementById("completedSessions");
 
 const totalStudy =
     document.getElementById("totalStudy");
+
+const historyList =
+    document.getElementById("historyList");
 
 
 /* LANGUAGE */
@@ -92,44 +113,23 @@ const alarmSound =
    TIMER STATE
 ===================================================== */
 
-
-/*
-    currentPhase can be:
-
-    "study"
-    "short"
-    "long"
-*/
-
 let currentPhase = "study";
 
+let remainingSeconds = 25 * 60;
 
-let remainingSeconds =
-    25 * 60;
+let totalSeconds = 25 * 60;
 
+let timerInterval = null;
 
-let totalSeconds =
-    25 * 60;
+let isRunning = false;
 
+let completed = 0;
 
-let timerInterval =
-    null;
+let totalStudyMinutes = 0;
 
+let currentSession = 0;
 
-let isRunning =
-    false;
-
-
-let completed =
-    0;
-
-
-let totalStudyMinutes =
-    0;
-
-
-let currentSession =
-    0;
+let sessionHistory = [];
 
 
 /* =====================================================
@@ -188,6 +188,9 @@ const translations = {
         alarm:
             "Alarm Repetitions",
 
+        soundSelectLabel:
+            "Alarm Sound",
+
         autoBreak:
             "Auto Break",
 
@@ -200,11 +203,26 @@ const translations = {
         autoStudyText:
             "Start studying automatically",
 
+        notifTitle:
+            "Browser Notifications",
+
+        notifText:
+            "Get notified when phase ends",
+
         completed:
             "Sessions Completed",
 
         total:
             "Total Study Time",
+
+        historyTitle:
+            "Today's Sessions",
+
+        clearHistory:
+            "Clear",
+
+        exitZen:
+            "✕ Exit Zen Mode",
 
         tip:
             "Set your times and press Start.",
@@ -216,7 +234,19 @@ const translations = {
             "⏸ Pause",
 
         reset:
-            "↻ Reset"
+            "↻ Reset",
+
+        notifStudyFinishTitle:
+            "Study Phase Complete! 🎉",
+
+        notifStudyFinishBody:
+            "Great job! Time for a break.",
+
+        notifBreakFinishTitle:
+            "Break Finished! 💪",
+
+        notifBreakFinishBody:
+            "Ready to focus again? Let's go!"
 
     },
 
@@ -268,6 +298,9 @@ const translations = {
         alarm:
             "عدد مرات الرنة",
 
+        soundSelectLabel:
+            "صوت التنبيه",
+
         autoBreak:
             "البريك التلقائي",
 
@@ -280,11 +313,26 @@ const translations = {
         autoStudyText:
             "ابدأ المذاكرة تلقائيًا",
 
+        notifTitle:
+            "إشعارات المتصفح",
+
+        notifText:
+            "تنبيهك عند انتهاء الوقت",
+
         completed:
             "السيشنز المكتملة",
 
         total:
             "إجمالي وقت المذاكرة",
+
+        historyTitle:
+            "جلسات اليوم",
+
+        clearHistory:
+            "مسح",
+
+        exitZen:
+            "✕ الخروج من وضع التركيز",
 
         tip:
             "ظبط الأوقات واضغط ابدأ.",
@@ -296,7 +344,19 @@ const translations = {
             "⏸ إيقاف",
 
         reset:
-            "↻ إعادة ضبط"
+            "↻ إعادة ضبط",
+
+        notifStudyFinishTitle:
+            "عاش يا بطل! خلصت السيشن 🎉",
+
+        notifStudyFinishBody:
+            "وقت البريك جه، ريّح دماغك شوية.",
+
+        notifBreakFinishTitle:
+            "البريك خلص! 💪",
+
+        notifBreakFinishBody:
+            "جاهز نرجع نركز تاني؟ يلا بينا!"
 
     }
 
@@ -309,28 +369,16 @@ const translations = {
 
 function getNumber(input, min, max) {
 
-    let value =
-        parseInt(input.value, 10);
-
+    let value = parseInt(input.value, 10);
 
     if (Number.isNaN(value)) {
-
         value = min;
-
     }
 
+    value = Math.max(min, value);
+    value = Math.min(max, value);
 
-    value =
-        Math.max(min, value);
-
-
-    value =
-        Math.min(max, value);
-
-
-    input.value =
-        value;
-
+    input.value = value;
 
     return value;
 }
@@ -342,19 +390,12 @@ function getNumber(input, min, max) {
 
 function formatTime(seconds) {
 
-    const minutes =
-        Math.floor(seconds / 60);
-
-
-    const secondsLeft =
-        seconds % 60;
-
+    const minutes = Math.floor(seconds / 60);
+    const secondsLeft = seconds % 60;
 
     return (
-        String(minutes).padStart(2, "0")
-        +
-        ":"
-        +
+        String(minutes).padStart(2, "0") +
+        ":" +
         String(secondsLeft).padStart(2, "0")
     );
 }
@@ -367,39 +408,14 @@ function formatTime(seconds) {
 function getPhaseDuration() {
 
     if (currentPhase === "study") {
-
-        return (
-            getNumber(
-                studyInput,
-                1,
-                180
-            ) * 60
-        );
-
+        return getNumber(studyInput, 1, 180) * 60;
     }
-
 
     if (currentPhase === "short") {
-
-        return (
-            getNumber(
-                shortInput,
-                1,
-                60
-            ) * 60
-        );
-
+        return getNumber(shortInput, 1, 60) * 60;
     }
 
-
-    return (
-        getNumber(
-            longInput,
-            1,
-            120
-        ) * 60
-    );
-
+    return getNumber(longInput, 1, 120) * 60;
 }
 
 
@@ -409,47 +425,26 @@ function getPhaseDuration() {
 
 function updateScreen() {
 
-    timerElement.textContent =
-        formatTime(remainingSeconds);
+    timerElement.textContent = formatTime(remainingSeconds);
 
+    modeElement.textContent = translations[currentLanguage][currentPhase];
 
-    modeElement.textContent =
-        translations[currentLanguage][currentPhase];
+    completedSessions.textContent = completed;
 
-
-    completedSessions.textContent =
-        completed;
-
-
-    totalStudy.textContent =
-        `${totalStudyMinutes}m`;
-
+    totalStudy.textContent = `${totalStudyMinutes}m`;
 
     let progress = 0;
 
-
     if (totalSeconds > 0) {
-
-        progress =
-            (
-                (totalSeconds - remainingSeconds)
-                /
-                totalSeconds
-            ) * 100;
-
+        progress = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
     }
 
+    progress = Math.max(0, Math.min(100, progress));
 
-    progress =
-        Math.max(
-            0,
-            Math.min(100, progress)
-        );
+    progressBar.style.width = `${progress}%`;
 
-
-    progressBar.style.width =
-        `${progress}%`;
-
+    // Update document title with timer
+    document.title = `${formatTime(remainingSeconds)} - MR SALTA3`;
 }
 
 
@@ -459,20 +454,52 @@ function updateScreen() {
 
 function loadPhase(phase) {
 
-    currentPhase =
-        phase;
+    currentPhase = phase;
 
+    totalSeconds = getPhaseDuration();
 
-    totalSeconds =
-        getPhaseDuration();
-
-
-    remainingSeconds =
-        totalSeconds;
-
+    remainingSeconds = totalSeconds;
 
     updateScreen();
+}
 
+
+/* =====================================================
+   SYNTHESIZED SOUND GENERATOR (Fallback Sounds)
+===================================================== */
+
+function playSynthesizedSound(type) {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        
+        const ctx = new AudioContext();
+        
+        if (type === "digital") {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(800, ctx.currentTime);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        } else if (type === "bell") {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+            gain.gain.setValueAtTime(0.5, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 1.2);
+        }
+    } catch (e) {
+        console.log("Web Audio API not supported", e);
+    }
 }
 
 
@@ -482,110 +509,75 @@ function loadPhase(phase) {
 
 function playAlarm() {
 
-    /*
-    ============================================
-    YOUR SOUND FILE
-
-    Put your sound here:
-
-    MR-SALTA3
-        sounds
-            alarm.mp3
-
-    ============================================
-    */
-
-
-    const repetitions =
-        getNumber(
-            alarmInput,
-            1,
-            20
-        );
-
-
-    /*
-        Play the sound multiple times.
-    */
+    const repetitions = getNumber(alarmInput, 1, 20);
+    const soundType = soundSelect.value;
 
     let count = 0;
-
 
     function playOnce() {
 
         if (count >= repetitions) {
-
             return;
-
         }
-
 
         count++;
 
+        if (soundType === "default") {
+            alarmSound.currentTime = 0;
+            const playPromise = alarmSound.play();
 
-        alarmSound.currentTime = 0;
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    console.log("Audio playback blocked:", error);
+                    // Fallback to digital sound if file blocked
+                    playSynthesizedSound("digital");
+                });
+            }
 
+            let waitTime = 1000;
+            if (Number.isFinite(alarmSound.duration) && alarmSound.duration > 0) {
+                waitTime = (alarmSound.duration * 1000) + 250;
+            }
 
-        const playPromise =
-            alarmSound.play();
-
-
-        if (
-            playPromise !== undefined
-        ) {
-
-            playPromise.catch(
-                (error) => {
-
-                    console.log(
-                        "Audio playback blocked:",
-                        error
-                    );
-
-                }
-            );
-
+            setTimeout(playOnce, waitTime);
+        } else {
+            playSynthesizedSound(soundType);
+            setTimeout(playOnce, soundType === "bell" ? 1300 : 400);
         }
-
-
-        /*
-            Wait for the audio to finish.
-
-            If the audio doesn't have a
-            proper duration, wait 1 second.
-        */
-
-        let waitTime = 1000;
-
-
-        if (
-            Number.isFinite(
-                alarmSound.duration
-            )
-            &&
-            alarmSound.duration > 0
-        ) {
-
-            waitTime =
-                (
-                    alarmSound.duration
-                    * 1000
-                ) + 250;
-
-        }
-
-
-        setTimeout(
-            playOnce,
-            waitTime
-        );
-
     }
 
-
     playOnce();
-
 }
+
+
+/* =====================================================
+   BROWSER NOTIFICATIONS
+===================================================== */
+
+function showNotification(title, body) {
+    if (!notifToggle.checked) return;
+
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: "https://cdn-icons-png.flaticon.com/512/3073/3073992.png"
+        });
+    }
+}
+
+notifToggle.addEventListener("change", function () {
+    if (notifToggle.checked) {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission !== "granted") {
+                    notifToggle.checked = false;
+                }
+            });
+        } else {
+            notifToggle.checked = false;
+        }
+    }
+});
 
 
 /* =====================================================
@@ -594,23 +586,95 @@ function playAlarm() {
 
 function celebrateCrab() {
 
-    crab.classList.remove(
-        "celebrate"
-    );
+    crab.classList.remove("celebrate");
 
+    void crab.offsetWidth; // Force reflow
 
-    /*
-        Force browser to restart animation.
-    */
-
-    void crab.offsetWidth;
-
-
-    crab.classList.add(
-        "celebrate"
-    );
-
+    crab.classList.add("celebrate");
 }
+
+
+/* =====================================================
+   HISTORY MANAGEMENT
+===================================================== */
+
+function addHistoryEntry(minutes) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const entry = {
+        time: timeString,
+        minutes: minutes,
+        date: now.toLocaleDateString()
+    };
+
+    sessionHistory.unshift(entry);
+    saveHistory();
+    renderHistory();
+}
+
+function renderHistory() {
+    historyList.innerHTML = "";
+
+    if (sessionHistory.length === 0) {
+        const emptyLi = document.createElement("li");
+        emptyLi.className = "history-item";
+        emptyLi.style.justifyContent = "center";
+        emptyLi.style.opacity = "0.6";
+        emptyLi.textContent = currentLanguage === "ar" ? "لا توجد جلسات اليوم" : "No sessions today";
+        historyList.appendChild(emptyLi);
+        return;
+    }
+
+    sessionHistory.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "history-item";
+
+        const textSpan = document.createElement("span");
+        textSpan.textContent = `${currentLanguage === "ar" ? "جلسة مذاكرة" : "Study Session"} (${item.minutes}m)`;
+
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "history-item-time";
+        timeSpan.textContent = item.time;
+
+        li.appendChild(textSpan);
+        li.appendChild(timeSpan);
+        historyList.appendChild(li);
+    });
+}
+
+function saveHistory() {
+    localStorage.setItem("salta3_history", JSON.stringify(sessionHistory));
+    localStorage.setItem("salta3_completed", completed);
+    localStorage.setItem("salta3_totalMinutes", totalStudyMinutes);
+}
+
+function loadHistory() {
+    const savedHistory = localStorage.getItem("salta3_history");
+    const savedCompleted = localStorage.getItem("salta3_completed");
+    const savedTotal = localStorage.getItem("salta3_totalMinutes");
+
+    if (savedHistory) {
+        sessionHistory = JSON.parse(savedHistory);
+    }
+    if (savedCompleted) {
+        completed = parseInt(savedCompleted, 10);
+    }
+    if (savedTotal) {
+        totalStudyMinutes = parseInt(savedTotal, 10);
+    }
+
+    renderHistory();
+}
+
+clearHistoryBtn.addEventListener("click", function () {
+    sessionHistory = [];
+    completed = 0;
+    totalStudyMinutes = 0;
+    saveHistory();
+    renderHistory();
+    updateScreen();
+});
 
 
 /* =====================================================
@@ -619,167 +683,73 @@ function celebrateCrab() {
 
 function finishPhase() {
 
-    /*
-        Stop current interval first.
-    */
-
     isRunning = false;
 
-
-    clearInterval(
-        timerInterval
-    );
-
+    clearInterval(timerInterval);
 
     timerInterval = null;
 
 
     /* Play alarm */
-
     playAlarm();
 
 
     /* Crab animation */
-
     celebrateCrab();
 
 
-    /* =================================================
-       STUDY FINISHED
-    ================================================= */
+    /* ================= STUDY FINISHED ================= */
 
-    if (
-        currentPhase === "study"
-    ) {
+    if (currentPhase === "study") {
 
         completed++;
-
         currentSession++;
 
+        const studyMins = getNumber(studyInput, 1, 180);
+        totalStudyMinutes += studyMins;
 
-        totalStudyMinutes +=
-            getNumber(
-                studyInput,
-                1,
-                180
-            );
+        addHistoryEntry(studyMins);
 
+        const sessionsBeforeLong = getNumber(sessionsInput, 1, 20);
 
-        const sessionsBeforeLong =
-            getNumber(
-                sessionsInput,
-                1,
-                20
-            );
+        showNotification(
+            translations[currentLanguage].notifStudyFinishTitle,
+            translations[currentLanguage].notifStudyFinishBody
+        );
 
-
-        /*
-            Decide whether next break
-            is short or long.
-        */
-
-        if (
-            currentSession >=
-            sessionsBeforeLong
-        ) {
-
+        if (currentSession >= sessionsBeforeLong) {
             currentSession = 0;
-
-
-            loadPhase(
-                "long"
-            );
-
+            loadPhase("long");
+        } else {
+            loadPhase("short");
         }
 
-        else {
-
-            loadPhase(
-                "short"
-            );
-
-        }
-
-
-        /*
-            AUTO BREAK ON
-
-            Start break automatically.
-
-            AUTO BREAK OFF
-
-            Wait for user to press Start.
-        */
-
-        if (
-            autoBreak.checked
-        ) {
-
-            statusElement.textContent =
-                translations[currentLanguage].break;
-
-
+        if (autoBreak.checked) {
+            statusElement.textContent = translations[currentLanguage].break;
             startTimer();
-
+        } else {
+            statusElement.textContent = translations[currentLanguage].waiting;
         }
-
-        else {
-
-            statusElement.textContent =
-                translations[currentLanguage].waiting;
-
-        }
-
 
         return;
-
     }
 
 
-    /* =================================================
-       BREAK FINISHED
-    ================================================= */
+    /* ================= BREAK FINISHED ================= */
 
-    /*
-        Break finished.
-
-        Go back to study.
-    */
-
-    loadPhase(
-        "study"
+    showNotification(
+        translations[currentLanguage].notifBreakFinishTitle,
+        translations[currentLanguage].notifBreakFinishBody
     );
 
+    loadPhase("study");
 
-    /*
-        AUTO STUDY ON
-
-        Start study automatically.
-
-        AUTO STUDY OFF
-
-        Wait for user.
-    */
-
-    if (
-        autoStudy.checked
-    ) {
-
-        statusElement.textContent =
-            translations[currentLanguage].studying;
-
-
+    if (autoStudy.checked) {
+        statusElement.textContent = translations[currentLanguage].studying;
         startTimer();
-
+    } else {
+        statusElement.textContent = translations[currentLanguage].waiting;
     }
-
-    else {
-
-        statusElement.textContent =
-            translations[currentLanguage].waiting;
-
-    }
-
 }
 
 
@@ -789,81 +759,26 @@ function finishPhase() {
 
 function startTimer() {
 
-    /*
-        Don't create multiple intervals.
-    */
-
-    if (
-        isRunning
-    ) {
-
-        return;
-
-    }
-
+    if (isRunning) return;
 
     isRunning = true;
 
-
-    /*
-        Status message.
-    */
-
-    if (
-        currentPhase === "study"
-    ) {
-
-        statusElement.textContent =
-            translations[currentLanguage].studying;
-
+    if (currentPhase === "study") {
+        statusElement.textContent = translations[currentLanguage].studying;
+    } else {
+        statusElement.textContent = translations[currentLanguage].break;
     }
 
-    else {
+    timerInterval = setInterval(() => {
 
-        statusElement.textContent =
-            translations[currentLanguage].break;
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+            updateScreen();
+        } else {
+            finishPhase();
+        }
 
-    }
-
-
-    /*
-        Main timer loop.
-    */
-
-    timerInterval =
-        setInterval(
-            () => {
-
-
-                /*
-                    Timer still running.
-                */
-
-                if (
-                    remainingSeconds > 0
-                ) {
-
-                    remainingSeconds--;
-
-                    updateScreen();
-
-                }
-
-
-                /*
-                    Timer reached zero.
-                */
-
-                else {
-
-                    finishPhase();
-
-                }
-
-            },
-            1000
-        );
-
+    }, 1000);
 }
 
 
@@ -873,29 +788,15 @@ function startTimer() {
 
 function pauseTimer() {
 
-    if (
-        !isRunning
-    ) {
-
-        return;
-
-    }
-
+    if (!isRunning) return;
 
     isRunning = false;
 
-
-    clearInterval(
-        timerInterval
-    );
-
+    clearInterval(timerInterval);
 
     timerInterval = null;
 
-
-    statusElement.textContent =
-        translations[currentLanguage].paused;
-
+    statusElement.textContent = translations[currentLanguage].paused;
 }
 
 
@@ -905,80 +806,27 @@ function pauseTimer() {
 
 function resetTimer() {
 
-    /*
-        Stop timer.
-    */
-
     isRunning = false;
 
-
-    clearInterval(
-        timerInterval
-    );
-
+    clearInterval(timerInterval);
 
     timerInterval = null;
 
+    currentPhase = "study";
 
-    /*
-        Reset everything.
-    */
+    currentSession = 0;
 
-    currentPhase =
-        "study";
+    totalSeconds = getPhaseDuration();
 
+    remainingSeconds = totalSeconds;
 
-    currentSession =
-        0;
+    progressBar.style.width = "0%";
 
+    crab.classList.remove("celebrate");
 
-    completed =
-        0;
-
-
-    totalStudyMinutes =
-        0;
-
-
-    /*
-        Reload study duration.
-    */
-
-    totalSeconds =
-        getPhaseDuration();
-
-
-    remainingSeconds =
-        totalSeconds;
-
-
-    /*
-        Reset progress.
-    */
-
-    progressBar.style.width =
-        "0%";
-
-
-    /*
-        Remove crab animation.
-    */
-
-    crab.classList.remove(
-        "celebrate"
-    );
-
-
-    /*
-        Status.
-    */
-
-    statusElement.textContent =
-        translations[currentLanguage].ready;
-
+    statusElement.textContent = translations[currentLanguage].ready;
 
     updateScreen();
-
 }
 
 
@@ -988,42 +836,69 @@ function resetTimer() {
 
 function settingsChanged() {
 
-    /*
-        Don't change timer duration
-        while timer is running.
-    */
+    if (isRunning) return;
 
-    if (
-        isRunning
-    ) {
-
-        return;
-
+    if (currentPhase === "study") {
+        totalSeconds = getPhaseDuration();
+        remainingSeconds = totalSeconds;
     }
-
-
-    /*
-        If we're on study phase,
-        update immediately.
-    */
-
-    if (
-        currentPhase === "study"
-    ) {
-
-        totalSeconds =
-            getPhaseDuration();
-
-
-        remainingSeconds =
-            totalSeconds;
-
-    }
-
 
     updateScreen();
-
 }
+
+
+/* =====================================================
+   THEME TOGGLE (Dark / Light Mode)
+===================================================== */
+
+themeToggleBtn.addEventListener("click", function () {
+    document.body.classList.toggle("dark-mode");
+    const isDark = document.body.classList.contains("dark-mode");
+    themeToggleBtn.textContent = isDark ? "☀️" : "🌙";
+    localStorage.setItem("salta3_theme", isDark ? "dark" : "light");
+});
+
+function loadTheme() {
+    const savedTheme = localStorage.getItem("salta3_theme");
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-mode");
+        themeToggleBtn.textContent = "☀️";
+    }
+}
+
+
+/* =====================================================
+   ZEN MODE (Full Screen Mode)
+===================================================== */
+
+zenModeBtn.addEventListener("click", function () {
+    document.body.classList.add("zen-mode");
+});
+
+exitZenBtn.addEventListener("click", function () {
+    document.body.classList.remove("zen-mode");
+});
+
+
+/* =====================================================
+   KEYBOARD SHORTCUTS
+===================================================== */
+
+document.addEventListener("keydown", function (e) {
+    // Ignore keypresses if typing in input fields
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+
+    if (e.code === "Space") {
+        e.preventDefault();
+        if (isRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    } else if (e.code === "KeyR") {
+        resetTimer();
+    }
+});
 
 
 /* =====================================================
@@ -1032,147 +907,67 @@ function settingsChanged() {
 
 function updateLanguage() {
 
-    const t =
-        translations[currentLanguage];
+    const t = translations[currentLanguage];
 
+    document.getElementById("settingsTitle").textContent = t.settings;
 
-    document.getElementById(
-        "settingsTitle"
-    ).textContent =
-        t.settings;
+    document.getElementById("studyLabel").textContent = t.studyMinutes;
 
+    document.getElementById("shortLabel").textContent = t.shortBreak;
 
-    document.getElementById(
-        "studyLabel"
-    ).textContent =
-        t.studyMinutes;
+    document.getElementById("longLabel").textContent = t.longBreak;
 
+    document.getElementById("sessionsLabel").textContent = t.sessions;
 
-    document.getElementById(
-        "shortLabel"
-    ).textContent =
-        t.shortBreak;
+    document.getElementById("alarmLabel").textContent = t.alarm;
 
+    document.getElementById("soundSelectLabel").textContent = t.soundSelectLabel;
 
-    document.getElementById(
-        "longLabel"
-    ).textContent =
-        t.longBreak;
+    document.getElementById("autoBreakTitle").textContent = t.autoBreak;
 
+    document.getElementById("autoBreakText").textContent = t.autoBreakText;
 
-    document.getElementById(
-        "sessionsLabel"
-    ).textContent =
-        t.sessions;
+    document.getElementById("autoStudyTitle").textContent = t.autoStudy;
 
+    document.getElementById("autoStudyText").textContent = t.autoStudyText;
 
-    document.getElementById(
-        "alarmLabel"
-    ).textContent =
-        t.alarm;
+    document.getElementById("notifTitle").textContent = t.notifTitle;
 
+    document.getElementById("notifText").textContent = t.notifText;
 
-    document.getElementById(
-        "autoBreakTitle"
-    ).textContent =
-        t.autoBreak;
+    document.getElementById("sessionsText").textContent = t.completed;
 
+    document.getElementById("totalText").textContent = t.total;
 
-    document.getElementById(
-        "autoBreakText"
-    ).textContent =
-        t.autoBreakText;
+    document.getElementById("historyTitle").textContent = t.historyTitle;
 
+    document.getElementById("clearHistoryBtn").textContent = t.clearHistory;
 
-    document.getElementById(
-        "autoStudyTitle"
-    ).textContent =
-        t.autoStudy;
+    document.getElementById("exitZenBtn").textContent = t.exitZen;
 
+    document.getElementById("tipText").textContent = t.tip;
 
-    document.getElementById(
-        "autoStudyText"
-    ).textContent =
-        t.autoStudyText;
+    startBtn.textContent = t.start;
 
+    pauseBtn.textContent = t.pause;
 
-    document.getElementById(
-        "sessionsText"
-    ).textContent =
-        t.completed;
+    resetBtn.textContent = t.reset;
 
-
-    document.getElementById(
-        "totalText"
-    ).textContent =
-        t.total;
-
-
-    document.getElementById(
-        "tipText"
-    ).textContent =
-        t.tip;
-
-
-    startBtn.textContent =
-        t.start;
-
-
-    pauseBtn.textContent =
-        t.pause;
-
-
-    resetBtn.textContent =
-        t.reset;
-
-
-    /*
-        Update status only if
-        timer isn't currently running.
-    */
-
-    if (
-        !isRunning
-    ) {
-
-        statusElement.textContent =
-            t.ready;
-
+    if (!isRunning) {
+        statusElement.textContent = t.ready;
     }
 
+    document.documentElement.lang = currentLanguage;
 
-    /*
-        Arabic / English direction.
-    */
+    document.documentElement.dir = currentLanguage === "ar" ? "rtl" : "ltr";
 
-    document.documentElement.lang =
-        currentLanguage;
+    enBtn.classList.toggle("active", currentLanguage === "en");
 
+    arBtn.classList.toggle("active", currentLanguage === "ar");
 
-    document.documentElement.dir =
-        currentLanguage === "ar"
-            ? "rtl"
-            : "ltr";
-
-
-    /*
-        Active language button.
-    */
-
-    enBtn.classList.toggle(
-        "active",
-        currentLanguage === "en"
-    );
-
-
-    arBtn.classList.toggle(
-        "active",
-        currentLanguage === "ar"
-    );
-
+    renderHistory();
 
     updateScreen();
-
 }
 
 
@@ -1180,106 +975,38 @@ function updateLanguage() {
    LANGUAGE BUTTONS
 ===================================================== */
 
-enBtn.addEventListener(
-    "click",
-    function () {
+enBtn.addEventListener("click", function () {
+    currentLanguage = "en";
+    updateLanguage();
+});
 
-        currentLanguage =
-            "en";
-
-        updateLanguage();
-
-    }
-);
-
-
-arBtn.addEventListener(
-    "click",
-    function () {
-
-        currentLanguage =
-            "ar";
-
-        updateLanguage();
-
-    }
-);
+arBtn.addEventListener("click", function () {
+    currentLanguage = "ar";
+    updateLanguage();
+});
 
 
 /* =====================================================
-   TIMER BUTTONS
+   TIMER BUTTONS & INPUT EVENTS
 ===================================================== */
 
-startBtn.addEventListener(
-    "click",
-    function () {
+startBtn.addEventListener("click", startTimer);
 
-        startTimer();
+pauseBtn.addEventListener("click", pauseTimer);
 
-    }
-);
+resetBtn.addEventListener("click", resetTimer);
 
+studyInput.addEventListener("input", settingsChanged);
 
-pauseBtn.addEventListener(
-    "click",
-    function () {
+shortInput.addEventListener("input", settingsChanged);
 
-        pauseTimer();
+longInput.addEventListener("input", settingsChanged);
 
-    }
-);
+sessionsInput.addEventListener("input", settingsChanged);
 
-
-resetBtn.addEventListener(
-    "click",
-    function () {
-
-        resetTimer();
-
-    }
-);
-
-
-/* =====================================================
-   INPUT EVENTS
-===================================================== */
-
-studyInput.addEventListener(
-    "input",
-    settingsChanged
-);
-
-
-shortInput.addEventListener(
-    "input",
-    settingsChanged
-);
-
-
-longInput.addEventListener(
-    "input",
-    settingsChanged
-);
-
-
-sessionsInput.addEventListener(
-    "input",
-    settingsChanged
-);
-
-
-alarmInput.addEventListener(
-    "input",
-    function () {
-
-        getNumber(
-            alarmInput,
-            1,
-            20
-        );
-
-    }
-);
+alarmInput.addEventListener("input", function () {
+    getNumber(alarmInput, 1, 20);
+});
 
 
 /* =====================================================
@@ -1288,23 +1015,17 @@ alarmInput.addEventListener(
 
 function initialize() {
 
-    /*
-        Load initial study time.
-    */
+    totalSeconds = getPhaseDuration();
 
-    totalSeconds =
-        getPhaseDuration();
+    remainingSeconds = totalSeconds;
 
+    loadTheme();
 
-    remainingSeconds =
-        totalSeconds;
-
+    loadHistory();
 
     updateLanguage();
 
-
     updateScreen();
-
 }
 
 
