@@ -1,16 +1,126 @@
-/* =====================================================
-   MR SALTA3 - STUDY TIMER
-   MAIN JAVASCRIPT
-===================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, set, get, child, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
 
-/* GET ELEMENTS */
+// إعدادات Firebase الخاصة بالمشروع
+const firebaseConfig = {
+    apiKey: "AIzaSyBQJd93k9OyQIBzJejjddMLSpWvyj2kXw8",
+    authDomain: "mr-salta3.firebaseapp.com",
+    databaseURL: "https://mr-salta3-default-rtdb.firebaseio.com",
+    projectId: "mr-salta3",
+    storageBucket: "mr-salta3.firebasestorage.app",
+    messagingSenderId: "183894514268",
+    appId: "1:183894514268:web:bf5c69625bd79f2302a499",
+    measurementId: "G-53G69D4B37"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// اسم المستخدم للشات ومعرّف الفريد للجهاز/المستخدم
+let currentUserName = localStorage.getItem('salta3_username') || '';
+let myUserId = localStorage.getItem('salta3_userid');
+if (!myUserId) {
+    myUserId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    localStorage.setItem('salta3_userid', myUserId);
+}
+
+tailwind.config = {
+    darkMode: 'class',
+    theme: {
+        extend: {
+            colors: {
+                ocean: {
+                    dark: '#063b45',
+                    DEFAULT: '#087f8c',
+                    light: '#38b8c0',
+                    bg: '#eaf8f7'
+                },
+                coral: {
+                    DEFAULT: '#ed6659',
+                    dark: '#a9443d'
+                },
+                sand: '#f4d49c'
+            }
+        }
+    }
+};
+
+/* ================= TRANSLATIONS ================= */
+const i18n = {
+    ar: {
+        navTimer: "التايمر", navSummaries: "الملخصات", navHabits: "متتبع العادات", navGroups: "المجموعات الخاصة", navContact: "تواصل معنا",
+        summariesTitle: "مكتبة الملخصات والملاحظات", addSummaryBtn: "إضافة ملخص جديد", newSummaryHeader: "نشر ملخص دراسي",
+        attachFile: "مرفق ملف (اختياري - PDF/صورة):", cancel: "إلغاء", publish: "نشر الملخص", habitsTitle: "متتبع العادات الدراسية",
+        addHabit: "إضافة عادة", groupsTitle: "المجموعات الخاصة", joinCodeLabel: "الانضمام بكود المجموعات:", join: "انضمام",
+        createGroupBtn: "+ إنشاء مجموعة دراسية جديدة", create: "إنشاء", myGroupsHeader: "مجموعاتي:", selectGroupHint: "اختر مجموعة من القائمة أو انضم برمز للبدء في الدردشة",
+        copyInvite: "نسخ رابط الدعوة", send: "إرسال", contactTitle: "تواصل معنا", contactSub: "لديك اقتراح أو واجهتك مشكلة؟ يسعدنا تواصلك مع فريق MR SALTA3",
+        contactName: "الاسم الكامل", contactEmail: "البريد الإلكتروني", contactMessage: "الرسالة", contactSend: "إرسال الرسالة"
+    },
+    en: {
+        navTimer: "Timer", navSummaries: "Summaries", navHabits: "Habit Tracker", navGroups: "Private Groups", navContact: "Contact Us",
+        summariesTitle: "Summaries & Notes Library", addSummaryBtn: "Add New Summary", newSummaryHeader: "Publish Study Summary",
+        attachFile: "Attach File (Optional - PDF/Image):", cancel: "Cancel", publish: "Publish Summary", habitsTitle: "Study Habit Tracker",
+        addHabit: "Add Habit", groupsTitle: "Private Groups", joinCodeLabel: "Join by Group Code:", join: "Join",
+        createGroupBtn: "+ Create New Study Group", create: "Create", myGroupsHeader: "My Groups:", selectGroupHint: "Select a group or join with a code to start chatting",
+        copyInvite: "Copy Invite Link", send: "Send", contactTitle: "Contact Us", contactSub: "Have a suggestion or an issue? Contact MR SALTA3 team.",
+        contactName: "Full Name", contactEmail: "Email Address", contactMessage: "Message", contactSend: "Send Message"
+    }
+};
+
+const timerTranslations = {
+    en: {
+        study: "STUDY TIME", short: "SHORT BREAK", long: "LONG BREAK",
+        ready: "Set your time and press Start.", studying: "Stay focused — you got this!", break: "Break time. Recharge!",
+        paused: "Timer paused.", waiting: "Waiting for you to start.", settings: "Timer Settings", studyMinutes: "Study Minutes",
+        shortBreak: "Short Break", longBreak: "Long Break", sessions: "Sessions Before Long Break", alarm: "Alarm Repetitions",
+        soundSelectLabel: "Alarm Sound", autoBreak: "Auto Break", autoBreakText: "Start breaks automatically",
+        autoStudy: "Auto Study", autoStudyText: "Start studying automatically", notifTitle: "Browser Notifications",
+        notifText: "Get notified when phase ends", completed: "Sessions Completed", total: "Total Study Time",
+        historyTitle: "Today's Sessions", clearHistory: "Clear", exitZen: "✕ Exit Zen Mode", tip: "Set your times and press Start.",
+        start: "▶ Start", pause: "⏸ Pause", reset: "↻ Reset",
+        notifStudyFinishTitle: "Study Phase Complete! 🎉", notifStudyFinishBody: "Great job! Time for a break.",
+        notifBreakFinishTitle: "Break Finished! 💪", notifBreakFinishBody: "Ready to focus again? Let's go!"
+    },
+    ar: {
+        study: "وقت المذاكرة", short: "البريك القصير", long: "اللونج بريك",
+        ready: "ظبط الوقت واضغط ابدأ.", studying: "ركز يا بطل — أنت قدها!", break: "وقت البريك — ريّح دماغك!",
+        paused: "التايمر متوقف مؤقتًا.", waiting: "مستنيك تبدأ.", settings: "إعدادات التايمر", studyMinutes: "دقائق المذاكرة",
+        shortBreak: "البريك القصير", longBreak: "اللونج بريك", sessions: "عدد السيشنز قبل اللونج بريك", alarm: "عدد مرات الرنة",
+        soundSelectLabel: "صوت التنبيه", autoBreak: "البريك التلقائي", autoBreakText: "ابدأ البريك تلقائيًا",
+        autoStudy: "المذاكرة التلقائية", autoStudyText: "ابدأ المذاكرة تلقائيًا", notifTitle: "إشعارات المتصفح",
+        notifText: "تنبيهك عند انتهاء الوقت", completed: "السيشنز المكتملة", total: "إجمالي وقت المذاكرة",
+        historyTitle: "جلسات اليوم", clearHistory: "مسح", exitZen: "✕ الخروج من وضع التركيز", tip: "ظبط الأوقات واضغط ابدأ.",
+        start: "▶ ابدأ", pause: "⏸ إيقاف", reset: "↻ إعادة ضبط",
+        notifStudyFinishTitle: "عاش يا بطل! خلصت السيشن 🎉", notifStudyFinishBody: "وقت البريك جه، ريّح دماغك شوية.",
+        notifBreakFinishTitle: "البريك خلص! 💪", notifBreakFinishBody: "جاهز نرجع نركز تاني؟ يلا بينا!"
+    }
+};
+
+let currentLanguage = "ar";
+
+// Tab Navigation Logic
+document.querySelectorAll('.nav-tab').forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(b => {
+            b.classList.remove('active', 'bg-white', 'dark:bg-ocean-dark', 'shadow', 'text-ocean-dark', 'dark:text-white');
+            b.classList.add('hover:bg-white/30', 'text-white');
+        });
+        tabBtn.classList.add('active', 'bg-white', 'dark:bg-ocean-dark', 'shadow', 'text-ocean-dark', 'dark:text-white');
+        tabBtn.classList.remove('hover:bg-white/30', 'text-white');
+
+        const targetTab = tabBtn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+    });
+});
+
+/* ================= TIMER SCRIPT ================= */
 const timerElement = document.getElementById("timer");
 const modeElement = document.getElementById("mode");
 const statusElement = document.getElementById("status");
 const progressBar = document.getElementById("progressBar");
 const crab = document.getElementById("crab");
 
-/* BUTTONS */
 const startBtn = document.getElementById("startBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -19,12 +129,10 @@ const zenModeBtn = document.getElementById("zenModeBtn");
 const exitZenBtn = document.getElementById("exitZenBtn");
 const clearHistoryBtn = document.getElementById("clearHistoryBtn");
 
-/* PHASE BUTTONS */
 const phaseStudyBtn = document.getElementById("phaseStudyBtn");
 const phaseShortBtn = document.getElementById("phaseShortBtn");
 const phaseLongBtn = document.getElementById("phaseLongBtn");
 
-/* INPUTS */
 const studyInput = document.getElementById("studyInput");
 const shortInput = document.getElementById("shortInput");
 const longInput = document.getElementById("longInput");
@@ -32,24 +140,18 @@ const sessionsInput = document.getElementById("sessionsInput");
 const alarmInput = document.getElementById("alarmInput");
 const soundSelect = document.getElementById("soundSelect");
 
-/* TOGGLES */
 const autoBreak = document.getElementById("autoBreak");
 const autoStudy = document.getElementById("autoStudy");
 const notifToggle = document.getElementById("notifToggle");
 
-/* STATS & HISTORY */
 const completedSessions = document.getElementById("completedSessions");
 const totalStudy = document.getElementById("totalStudy");
 const historyList = document.getElementById("historyList");
 
-/* LANGUAGE */
 const enBtn = document.getElementById("enBtn");
 const arBtn = document.getElementById("arBtn");
-
-/* SOUND */
 const alarmSound = document.getElementById("alarmSound");
 
-/* TIMER STATE */
 let currentPhase = "study";
 let remainingSeconds = 25 * 60;
 let totalSeconds = 25 * 60;
@@ -59,87 +161,7 @@ let completed = 0;
 let totalStudyMinutes = 0;
 let currentSession = 0;
 let sessionHistory = [];
-let currentLanguage = "en";
 
-/* TRANSLATIONS */
-const translations = {
-    en: {
-        study: "STUDY TIME",
-        short: "SHORT BREAK",
-        long: "LONG BREAK",
-        ready: "Set your time and press Start.",
-        studying: "Stay focused — you got this!",
-        break: "Break time. Recharge!",
-        finished: "Phase complete!",
-        paused: "Timer paused.",
-        waiting: "Waiting for you to start.",
-        settings: "Timer Settings",
-        studyMinutes: "Study Minutes",
-        shortBreak: "Short Break",
-        longBreak: "Long Break",
-        sessions: "Sessions Before Long Break",
-        alarm: "Alarm Repetitions",
-        soundSelectLabel: "Alarm Sound",
-        autoBreak: "Auto Break",
-        autoBreakText: "Start breaks automatically",
-        autoStudy: "Auto Study",
-        autoStudyText: "Start studying automatically",
-        notifTitle: "Browser Notifications",
-        notifText: "Get notified when phase ends",
-        completed: "Sessions Completed",
-        total: "Total Study Time",
-        historyTitle: "Today's Sessions",
-        clearHistory: "Clear",
-        exitZen: "✕ Exit Zen Mode",
-        tip: "Set your times and press Start.",
-        start: "▶ Start",
-        pause: "⏸ Pause",
-        reset: "↻ Reset",
-        notifStudyFinishTitle: "Study Phase Complete! 🎉",
-        notifStudyFinishBody: "Great job! Time for a break.",
-        notifBreakFinishTitle: "Break Finished! 💪",
-        notifBreakFinishBody: "Ready to focus again? Let's go!"
-    },
-    ar: {
-        study: "وقت المذاكرة",
-        short: "البريك القصير",
-        long: "اللونج بريك",
-        ready: "ظبط الوقت واضغط ابدأ.",
-        studying: "ركز يا بطل — أنت قدها!",
-        break: "وقت البريك — ريّح دماغك!",
-        finished: "المرحلة خلصت!",
-        paused: "التايمر متوقف مؤقتًا.",
-        waiting: "مستنيك تبدأ.",
-        settings: "إعدادات التايمر",
-        studyMinutes: "دقائق المذاكرة",
-        shortBreak: "البريك القصير",
-        longBreak: "اللونج بريك",
-        sessions: "عدد السيشنز قبل اللونج بريك",
-        alarm: "عدد مرات الرنة",
-        soundSelectLabel: "صوت التنبيه",
-        autoBreak: "البريك التلقائي",
-        autoBreakText: "ابدأ البريك تلقائيًا",
-        autoStudy: "المذاكرة التلقائية",
-        autoStudyText: "ابدأ المذاكرة تلقائيًا",
-        notifTitle: "إشعارات المتصفح",
-        notifText: "تنبيهك عند انتهاء الوقت",
-        completed: "السيشنز المكتملة",
-        total: "إجمالي وقت المذاكرة",
-        historyTitle: "جلسات اليوم",
-        clearHistory: "مسح",
-        exitZen: "✕ الخروج من وضع التركيز",
-        tip: "ظبط الأوقات واضغط ابدأ.",
-        start: "▶ ابدأ",
-        pause: "⏸ إيقاف",
-        reset: "↻ إعادة ضبط",
-        notifStudyFinishTitle: "عاش يا بطل! خلصت السيشن 🎉",
-        notifStudyFinishBody: "وقت البريك جه، ريّح دماغك شوية.",
-        notifBreakFinishTitle: "البريك خلص! 💪",
-        notifBreakFinishBody: "جاهز نرجع نركز تاني؟ يلا بينا!"
-    }
-};
-
-/* SAFE NUMBER FUNCTION */
 function getNumber(input, min, max) {
     let value = parseInt(input.value, 10);
     if (Number.isNaN(value)) value = min;
@@ -148,25 +170,18 @@ function getNumber(input, min, max) {
     return value;
 }
 
-/* FORMAT TIME */
 function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secondsLeft = seconds % 60;
-    return (
-        String(minutes).padStart(2, "0") +
-        ":" +
-        String(secondsLeft).padStart(2, "0")
-    );
+    return String(minutes).padStart(2, "0") + ":" + String(secondsLeft).padStart(2, "0");
 }
 
-/* GET DURATION */
 function getPhaseDuration() {
     if (currentPhase === "study") return getNumber(studyInput, 1, 180) * 60;
     if (currentPhase === "short") return getNumber(shortInput, 1, 60) * 60;
     return getNumber(longInput, 1, 120) * 60;
 }
 
-/* UPDATE CRAB CHARACTER STATE */
 function updateCrabState() {
     crab.classList.remove("state-study", "state-short", "state-long", "state-paused");
     if (!isRunning && remainingSeconds < totalSeconds) {
@@ -176,10 +191,9 @@ function updateCrabState() {
     }
 }
 
-/* UPDATE SCREEN */
 function updateScreen() {
     timerElement.textContent = formatTime(remainingSeconds);
-    modeElement.textContent = translations[currentLanguage][currentPhase];
+    modeElement.textContent = timerTranslations[currentLanguage][currentPhase];
     completedSessions.textContent = completed;
     totalStudy.textContent = `${totalStudyMinutes}m`;
 
@@ -189,26 +203,23 @@ function updateScreen() {
     }
     progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
 
-    // Phase Switcher Active State
-    phaseStudyBtn.classList.toggle("active", currentPhase === "study");
-    phaseShortBtn.classList.toggle("active", currentPhase === "short");
-    phaseLongBtn.classList.toggle("active", currentPhase === "long");
+    phaseStudyBtn.className = currentPhase === "study" ? "flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition" : "flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition";
+    phaseShortBtn.className = currentPhase === "short" ? "flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition" : "flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition";
+    phaseLongBtn.className = currentPhase === "long" ? "flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition" : "flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition";
 
     updateCrabState();
     document.title = `${formatTime(remainingSeconds)} - MR SALTA3`;
 }
 
-/* LOAD PHASE */
 function loadPhase(phase) {
     if (isRunning) pauseTimer();
     currentPhase = phase;
     totalSeconds = getPhaseDuration();
     remainingSeconds = totalSeconds;
-    statusElement.textContent = translations[currentLanguage].ready;
+    statusElement.textContent = timerTranslations[currentLanguage].ready;
     updateScreen();
 }
 
-/* SOUND GENERATOR FALLBACK */
 function playSynthesizedSound(type) {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -242,7 +253,6 @@ function playSynthesizedSound(type) {
     }
 }
 
-/* PLAY ALARM */
 function playAlarm() {
     const repetitions = getNumber(alarmInput, 1, 20);
     const soundType = soundSelect.value;
@@ -268,7 +278,6 @@ function playAlarm() {
     playOnce();
 }
 
-/* NOTIFICATIONS */
 function showNotification(title, body) {
     if (!notifToggle.checked) return;
     if ("Notification" in window && Notification.permission === "granted") {
@@ -287,14 +296,12 @@ notifToggle.addEventListener("change", function () {
     }
 });
 
-/* CELEBRATION ANIMATION */
 function celebrateCrab() {
     crab.classList.remove("celebrate");
     void crab.offsetWidth;
     crab.classList.add("celebrate");
 }
 
-/* HISTORY MANAGEMENT */
 function addHistoryEntry(minutes) {
     const now = new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -307,9 +314,7 @@ function renderHistory() {
     historyList.innerHTML = "";
     if (sessionHistory.length === 0) {
         const emptyLi = document.createElement("li");
-        emptyLi.className = "history-item";
-        emptyLi.style.justifyContent = "center";
-        emptyLi.style.opacity = "0.6";
+        emptyLi.className = "flex justify-center text-gray-400 py-1";
         emptyLi.textContent = currentLanguage === "ar" ? "لا توجد جلسات اليوم" : "No sessions today";
         historyList.appendChild(emptyLi);
         return;
@@ -317,11 +322,11 @@ function renderHistory() {
 
     sessionHistory.forEach(item => {
         const li = document.createElement("li");
-        li.className = "history-item";
+        li.className = "flex justify-between items-center p-1.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700";
         const textSpan = document.createElement("span");
         textSpan.textContent = `${currentLanguage === "ar" ? "جلسة مذاكرة" : "Study Session"} (${item.minutes}m)`;
         const timeSpan = document.createElement("span");
-        timeSpan.className = "history-item-time";
+        timeSpan.className = "text-gray-400 font-mono";
         timeSpan.textContent = item.time;
         li.appendChild(textSpan);
         li.appendChild(timeSpan);
@@ -354,7 +359,6 @@ clearHistoryBtn.addEventListener("click", function () {
     updateScreen();
 });
 
-/* FINISH PHASE */
 function finishPhase() {
     isRunning = false;
     clearInterval(timerInterval);
@@ -371,7 +375,7 @@ function finishPhase() {
         addHistoryEntry(studyMins);
 
         const sessionsBeforeLong = getNumber(sessionsInput, 1, 20);
-        showNotification(translations[currentLanguage].notifStudyFinishTitle, translations[currentLanguage].notifStudyFinishBody);
+        showNotification(timerTranslations[currentLanguage].notifStudyFinishTitle, timerTranslations[currentLanguage].notifStudyFinishBody);
 
         if (currentSession >= sessionsBeforeLong) {
             currentSession = 0;
@@ -381,33 +385,32 @@ function finishPhase() {
         }
 
         if (autoBreak.checked) {
-            statusElement.textContent = translations[currentLanguage].break;
+            statusElement.textContent = timerTranslations[currentLanguage].break;
             startTimer();
         } else {
-            statusElement.textContent = translations[currentLanguage].waiting;
+            statusElement.textContent = timerTranslations[currentLanguage].waiting;
         }
         return;
     }
 
-    showNotification(translations[currentLanguage].notifBreakFinishTitle, translations[currentLanguage].notifBreakFinishBody);
+    showNotification(timerTranslations[currentLanguage].notifBreakFinishTitle, timerTranslations[currentLanguage].notifBreakFinishBody);
     loadPhase("study");
 
     if (autoStudy.checked) {
-        statusElement.textContent = translations[currentLanguage].studying;
+        statusElement.textContent = timerTranslations[currentLanguage].studying;
         startTimer();
     } else {
-        statusElement.textContent = translations[currentLanguage].waiting;
+        statusElement.textContent = timerTranslations[currentLanguage].waiting;
     }
 }
 
-/* TIMER CONTROLS */
 function startTimer() {
     if (isRunning) return;
     isRunning = true;
 
     statusElement.textContent = currentPhase === "study" 
-        ? translations[currentLanguage].studying 
-        : translations[currentLanguage].break;
+        ? timerTranslations[currentLanguage].studying 
+        : timerTranslations[currentLanguage].break;
 
     updateCrabState();
 
@@ -426,7 +429,7 @@ function pauseTimer() {
     isRunning = false;
     clearInterval(timerInterval);
     timerInterval = null;
-    statusElement.textContent = translations[currentLanguage].paused;
+    statusElement.textContent = timerTranslations[currentLanguage].paused;
     updateCrabState();
 }
 
@@ -440,7 +443,7 @@ function resetTimer() {
     remainingSeconds = totalSeconds;
     progressBar.style.width = "0%";
     crab.classList.remove("celebrate");
-    statusElement.textContent = translations[currentLanguage].ready;
+    statusElement.textContent = timerTranslations[currentLanguage].ready;
     updateScreen();
 }
 
@@ -451,27 +454,33 @@ function settingsChanged() {
     updateScreen();
 }
 
-/* THEME & ZEN MODE */
 themeToggleBtn.addEventListener("click", function () {
-    document.body.classList.toggle("dark-mode");
-    const isDark = document.body.classList.contains("dark-mode");
+    document.documentElement.classList.toggle("dark");
+    const isDark = document.documentElement.classList.contains("dark");
     themeToggleBtn.textContent = isDark ? "☀️" : "🌙";
     localStorage.setItem("salta3_theme", isDark ? "dark" : "light");
 });
 
 function loadTheme() {
     if (localStorage.getItem("salta3_theme") === "dark") {
-        document.body.classList.add("dark-mode");
+        document.documentElement.classList.add("dark");
         themeToggleBtn.textContent = "☀️";
     }
 }
 
-zenModeBtn.addEventListener("click", () => document.body.classList.add("zen-mode"));
-exitZenBtn.addEventListener("click", () => document.body.classList.remove("zen-mode"));
+// Zen Mode Controls - Global Handling
+zenModeBtn.addEventListener("click", () => {
+    document.body.classList.add("zen-mode");
+    exitZenBtn.classList.remove("hidden");
+});
 
-/* SHORTCUTS */
+exitZenBtn.addEventListener("click", () => {
+    document.body.classList.remove("zen-mode");
+    exitZenBtn.classList.add("hidden");
+});
+
 document.addEventListener("keydown", function (e) {
-    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;
     if (e.code === "Space") {
         e.preventDefault();
         isRunning ? pauseTimer() : startTimer();
@@ -480,9 +489,8 @@ document.addEventListener("keydown", function (e) {
     }
 });
 
-/* LANGUAGE MANAGEMENT */
 function updateLanguage() {
-    const t = translations[currentLanguage];
+    const t = timerTranslations[currentLanguage];
     document.getElementById("settingsTitle").textContent = t.settings;
     document.getElementById("studyLabel").textContent = t.studyMinutes;
     document.getElementById("shortLabel").textContent = t.shortBreak;
@@ -510,8 +518,21 @@ function updateLanguage() {
 
     document.documentElement.lang = currentLanguage;
     document.documentElement.dir = currentLanguage === "ar" ? "rtl" : "ltr";
-    enBtn.classList.toggle("active", currentLanguage === "en");
-    arBtn.classList.toggle("active", currentLanguage === "ar");
+
+    if (currentLanguage === "ar") {
+        arBtn.className = "px-3 py-1 text-sm font-bold rounded-full bg-white text-ocean-dark transition";
+        enBtn.className = "px-3 py-1 text-sm font-bold rounded-full text-white hover:bg-white/10 transition";
+    } else {
+        enBtn.className = "px-3 py-1 text-sm font-bold rounded-full bg-white text-ocean-dark transition";
+        arBtn.className = "px-3 py-1 text-sm font-bold rounded-full text-white hover:bg-white/10 transition";
+    }
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[currentLanguage][key]) {
+            el.textContent = i18n[currentLanguage][key];
+        }
+    });
 
     renderHistory();
     updateScreen();
@@ -520,12 +541,10 @@ function updateLanguage() {
 enBtn.addEventListener("click", () => { currentLanguage = "en"; updateLanguage(); });
 arBtn.addEventListener("click", () => { currentLanguage = "ar"; updateLanguage(); });
 
-/* PHASE SWITCHER EVENT LISTENERS */
 phaseStudyBtn.addEventListener("click", () => loadPhase("study"));
 phaseShortBtn.addEventListener("click", () => loadPhase("short"));
 phaseLongBtn.addEventListener("click", () => loadPhase("long"));
 
-/* INPUT LISTENERS */
 startBtn.addEventListener("click", startTimer);
 pauseBtn.addEventListener("click", pauseTimer);
 resetBtn.addEventListener("click", resetTimer);
@@ -535,14 +554,477 @@ longInput.addEventListener("input", settingsChanged);
 sessionsInput.addEventListener("input", settingsChanged);
 alarmInput.addEventListener("input", () => getNumber(alarmInput, 1, 20));
 
-/* INITIALIZE */
-function initialize() {
+/* ================= SUMMARIES MODULE ================= */
+let summaries = JSON.parse(localStorage.getItem('salta3_summaries') || '[]');
+
+const openUploadSummaryBtn = document.getElementById('openUploadSummaryBtn');
+const summaryFormCard = document.getElementById('summaryFormCard');
+const cancelSummaryBtn = document.getElementById('cancelSummaryBtn');
+const saveSummaryBtn = document.getElementById('saveSummaryBtn');
+const summariesList = document.getElementById('summariesList');
+
+openUploadSummaryBtn.addEventListener('click', () => summaryFormCard.classList.remove('hidden'));
+cancelSummaryBtn.addEventListener('click', () => summaryFormCard.classList.add('hidden'));
+
+saveSummaryBtn.addEventListener('click', () => {
+    const title = document.getElementById('sumTitle').value.trim();
+    const subject = document.getElementById('sumSubject').value.trim();
+    const content = document.getElementById('sumContent').value.trim();
+    const fileInput = document.getElementById('sumFile');
+
+    if (!title || !subject) return;
+
+    const newSummary = {
+        id: Date.now(),
+        title,
+        subject,
+        content,
+        rating: 5,
+        ratingsCount: 1,
+        date: new Date().toLocaleDateString(),
+        fileName: fileInput.files[0] ? fileInput.files[0].name : null
+    };
+
+    summaries.unshift(newSummary);
+    localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+    renderSummaries();
+
+    document.getElementById('sumTitle').value = '';
+    document.getElementById('sumSubject').value = '';
+    document.getElementById('sumContent').value = '';
+    fileInput.value = '';
+    summaryFormCard.classList.add('hidden');
+});
+
+function renderSummaries() {
+    summariesList.innerHTML = '';
+    if (summaries.length === 0) {
+        summariesList.innerHTML = `<div class="col-span-2 text-center text-gray-400 py-8 font-semibold">لا توجد ملخصات مرفوعة بعد. كن أول من يشارك!</div>`;
+        return;
+    }
+
+    summaries.forEach(s => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between relative group";
+        card.innerHTML = `
+            <div>
+                <div class="flex justify-between items-start mb-2">
+                    <span class="px-2.5 py-1 bg-ocean/20 text-ocean dark:text-ocean-light rounded-lg text-xs font-bold">${s.subject}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">${s.date}</span>
+                        <button data-delete-summary-id="${s.id}" class="delete-summary-btn text-coral hover:text-coral-dark text-xs font-bold bg-red-100 dark:bg-red-950/40 px-2 py-0.5 rounded-md transition" title="حذف الملخص">🗑️ مسح</button>
+                    </div>
+                </div>
+                <h3 class="font-bold text-ocean-dark dark:text-white text-base mb-1">${s.title}</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-300 mb-3">${s.content}</p>
+                ${s.fileName ? `<div class="text-xs text-ocean font-bold flex items-center gap-1 mb-3">📄 ${s.fileName}</div>` : ''}
+            </div>
+            <div class="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-2 text-xs">
+                <div class="flex items-center gap-1">
+                    <span class="text-amber-400 font-bold">★ ${s.rating.toFixed(1)}</span>
+                    <span class="text-gray-400">(${s.ratingsCount})</span>
+                </div>
+                <button data-rate-id="${s.id}" class="rate-summary-btn text-ocean hover:underline font-bold">قيم هذا الملخص</button>
+            </div>
+        `;
+        summariesList.appendChild(card);
+    });
+
+    document.querySelectorAll('.rate-summary-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.getAttribute('data-rate-id'), 10);
+            rateSummary(id);
+        });
+    });
+
+    document.querySelectorAll('.delete-summary-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.getAttribute('data-delete-summary-id'), 10);
+            deleteSummary(id);
+        });
+    });
+}
+
+function deleteSummary(id) {
+    if (confirm(currentLanguage === 'ar' ? 'هل أنت تأكد من مسح هذا الملخص؟' : 'Are you sure you want to delete this summary?')) {
+        summaries = summaries.filter(s => s.id !== id);
+        localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+        renderSummaries();
+    }
+}
+
+function rateSummary(id) {
+    const summary = summaries.find(item => item.id === id);
+    if (summary) {
+        summary.ratingsCount++;
+        summary.rating = Math.min(5, summary.rating + 0.1);
+        localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+        renderSummaries();
+    }
+}
+
+window.rateSummary = rateSummary;
+window.deleteSummary = deleteSummary;
+
+/* ================= HABITS MODULE ================= */
+let habits = JSON.parse(localStorage.getItem('salta3_habits') || '[]');
+
+const habitInput = document.getElementById('habitInput');
+const addHabitBtn = document.getElementById('addHabitBtn');
+const habitsList = document.getElementById('habitsList');
+
+addHabitBtn.addEventListener('click', () => {
+    const name = habitInput.value.trim();
+    if (!name) return;
+    habits.push({ id: Date.now(), name, done: false });
+    localStorage.setItem('salta3_habits', JSON.stringify(habits));
+    habitInput.value = '';
+    renderHabits();
+});
+
+function renderHabits() {
+    habitsList.innerHTML = '';
+    if (habits.length === 0) {
+        habitsList.innerHTML = `<div class="text-center text-gray-400 py-6 font-semibold">لم تقم بإضافة أي عادات بعد.</div>`;
+        return;
+    }
+
+    habits.forEach(h => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-3.5 bg-slate-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700";
+        item.innerHTML = `
+            <div class="flex items-center gap-3">
+                <input type="checkbox" ${h.done ? 'checked' : ''} data-habit-id="${h.id}" class="toggle-habit-chk w-5 h-5 accent-ocean rounded cursor-pointer">
+                <span class="font-bold text-sm ${h.done ? 'line-through text-gray-400' : 'text-ocean-dark dark:text-white'}">${h.name}</span>
+            </div>
+            <button data-delete-id="${h.id}" class="delete-habit-btn text-coral hover:text-coral-dark text-xs font-bold">حذف</button>
+        `;
+        habitsList.appendChild(item);
+    });
+
+    document.querySelectorAll('.toggle-habit-chk').forEach(chk => {
+        chk.addEventListener('change', (e) => {
+            const id = parseInt(e.target.getAttribute('data-habit-id'), 10);
+            toggleHabit(id);
+        });
+    });
+
+    document.querySelectorAll('.delete-habit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.getAttribute('data-delete-id'), 10);
+            deleteHabit(id);
+        });
+    });
+}
+
+function toggleHabit(id) {
+    const h = habits.find(item => item.id === id);
+    if (h) {
+        h.done = !h.done;
+        localStorage.setItem('salta3_habits', JSON.stringify(habits));
+        renderHabits();
+    }
+}
+
+function deleteHabit(id) {
+    habits = habits.filter(item => item.id !== id);
+    localStorage.setItem('salta3_habits', JSON.stringify(habits));
+    renderHabits();
+}
+
+window.toggleHabit = toggleHabit;
+window.deleteHabit = deleteHabit;
+
+/* ================= PRIVATE GROUPS MODULE (FIREBASE REALTIME INTEGRATION) ================= */
+let myJoinedGroupCodes = JSON.parse(localStorage.getItem('salta3_joined_codes') || '[]');
+let activeGroupCode = null;
+let currentGroupData = null;
+
+const openCreateGroupBtn = document.getElementById('openCreateGroupBtn');
+const createGroupCard = document.getElementById('createGroupCard');
+const cancelCreateGroupBtn = document.getElementById('cancelCreateGroupBtn');
+const saveCreateGroupBtn = document.getElementById('saveCreateGroupBtn');
+const joinGroupBtn = document.getElementById('joinGroupBtn');
+const joinCodeInput = document.getElementById('joinCodeInput');
+const myGroupsList = document.getElementById('myGroupsList');
+
+const noGroupSelected = document.getElementById('noGroupSelected');
+const activeGroupContent = document.getElementById('activeGroupContent');
+const chatGroupName = document.getElementById('chatGroupName');
+const chatGroupCode = document.getElementById('chatGroupCode');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChatBtn');
+const leaveGroupBtn = document.getElementById('leaveGroupBtn');
+const adminMuteBtn = document.getElementById('adminMuteBtn');
+const chatMutedNotice = document.getElementById('chatMutedNotice');
+
+openCreateGroupBtn.addEventListener('click', () => createGroupCard.classList.remove('hidden'));
+cancelCreateGroupBtn.addEventListener('click', () => createGroupCard.classList.add('hidden'));
+
+// الحصول على اسم المستخدم عند أول مشاركة في الدردشة
+function getUserName() {
+    if (!currentUserName) {
+        currentUserName = prompt(currentLanguage === 'ar' ? 'أدخل اسمك للظهور في الدردشة:' : 'Enter your name for the chat:') || 'طالب';
+        localStorage.setItem('salta3_username', currentUserName);
+    }
+    return currentUserName;
+}
+
+// إنشاء مجموعة جديدة في Firebase وتحديد الأدمن
+saveCreateGroupBtn.addEventListener('click', async () => {
+    const name = document.getElementById('newGroupName').value.trim();
+    if (!name) return;
+
+    const code = 'SALTA3-' + Math.floor(1000 + Math.random() * 9000);
+    const groupRef = ref(db, 'groups/' + code);
+
+    const initialMsgKey = Date.now();
+    const newGroupData = {
+        name: name,
+        code: code,
+        createdBy: myUserId,
+        isMuted: false,
+        messages: {
+            [initialMsgKey]: {
+                sender: 'MR SALTA3 Bot',
+                text: `مرحباً بكم في مجموعة ${name}! 🎉`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+        }
+    };
+
+    await set(groupRef, newGroupData);
+
+    if (!myJoinedGroupCodes.includes(code)) {
+        myJoinedGroupCodes.push(code);
+        localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
+    }
+
+    document.getElementById('newGroupName').value = '';
+    createGroupCard.classList.add('hidden');
+    renderGroups();
+    selectGroup(code);
+});
+
+// الانضمام لمجموعة عبر الرمز من Firebase
+joinGroupBtn.addEventListener('click', async () => {
+    const code = joinCodeInput.value.trim().toUpperCase();
+    if (!code) return;
+
+    const dbRef = ref(db);
+    const snapshot = await get(child(dbRef, `groups/${code}`));
+
+    if (snapshot.exists()) {
+        if (!myJoinedGroupCodes.includes(code)) {
+            myJoinedGroupCodes.push(code);
+            localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
+        }
+        joinCodeInput.value = '';
+        renderGroups();
+        selectGroup(code);
+    } else {
+        alert(currentLanguage === 'ar' ? 'رمز المجموعة غير صحيح!' : 'Invalid Group Code!');
+    }
+});
+
+function renderGroups() {
+    myGroupsList.innerHTML = '';
+    if (myJoinedGroupCodes.length === 0) {
+        myGroupsList.innerHTML = `<div class="text-xs text-gray-400 py-2">لا تنتمي لأي مجموعة حالياً.</div>`;
+        return;
+    }
+
+    myJoinedGroupCodes.forEach(code => {
+        const groupRef = ref(db, 'groups/' + code);
+        onValue(groupRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                let existingBtn = document.getElementById(`group-btn-${code}`);
+                if (!existingBtn) {
+                    existingBtn = document.createElement('button');
+                    existingBtn.id = `group-btn-${code}`;
+                    myGroupsList.appendChild(existingBtn);
+                }
+                existingBtn.className = `w-full text-right p-2.5 rounded-xl text-xs font-bold flex justify-between items-center transition ${activeGroupCode === code ? 'bg-ocean text-white' : 'bg-slate-100 dark:bg-gray-800 text-ocean-dark dark:text-white hover:bg-slate-200'}`;
+                existingBtn.innerHTML = `<span>${data.name}</span><span class="font-mono text-[10px] opacity-70">${data.code}</span>`;
+                existingBtn.onclick = () => selectGroup(code);
+            }
+        });
+    });
+}
+
+function selectGroup(code) {
+    activeGroupCode = code;
+    renderGroups();
+
+    const groupRef = ref(db, 'groups/' + code);
+
+    onValue(groupRef, (snapshot) => {
+        const g = snapshot.val();
+        if (!g) return;
+        currentGroupData = g;
+
+        noGroupSelected.classList.add('hidden');
+        activeGroupContent.classList.remove('hidden');
+
+        chatGroupName.textContent = g.name;
+        chatGroupCode.textContent = `رمز الانضمام: ${g.code}`;
+
+        // فحص ما إذا كان المستخدم الحالي هو أدمن المجموعة
+        const isAdmin = (g.createdBy === myUserId);
+        if (isAdmin) {
+            adminMuteBtn.classList.remove('hidden');
+            adminMuteBtn.textContent = g.isMuted ? '🔊 إلغاء الكتم' : '🔇 كتم الدردشة';
+        } else {
+            adminMuteBtn.classList.add('hidden');
+        }
+
+        // حالة الكتم للأعضاء
+        if (g.isMuted) {
+            chatInput.disabled = true;
+            sendChatBtn.disabled = true;
+            sendChatBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            chatMutedNotice.classList.remove('hidden');
+        } else {
+            chatInput.disabled = false;
+            sendChatBtn.disabled = false;
+            sendChatBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            chatMutedNotice.classList.add('hidden');
+        }
+
+        renderMessages(g.messages);
+    });
+}
+
+// مغادرة ومسح المجموعة من قائمة المستخدم فقط
+leaveGroupBtn.addEventListener('click', () => {
+    if (!activeGroupCode) return;
+    if (confirm(currentLanguage === 'ar' ? 'هل أنت تأكد من مغادرة ومسح هذه المجموعة من قائمتك؟' : 'Are you sure you want to leave and remove this group from your list?')) {
+        myJoinedGroupCodes = myJoinedGroupCodes.filter(c => c !== activeGroupCode);
+        localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
+        
+        activeGroupCode = null;
+        currentGroupData = null;
+        
+        activeGroupContent.classList.add('hidden');
+        noGroupSelected.classList.remove('hidden');
+        
+        renderGroups();
+    }
+});
+
+// زر الميوت الخاص بالأدمن
+adminMuteBtn.addEventListener('click', async () => {
+    if (!activeGroupCode || !currentGroupData) return;
+    const isCurrentlyMuted = currentGroupData.isMuted || false;
+    const groupRef = ref(db, 'groups/' + activeGroupCode);
+    await update(groupRef, { isMuted: !isCurrentlyMuted });
+});
+
+function renderMessages(messagesObj) {
+    chatMessages.innerHTML = '';
+    if (!messagesObj) return;
+
+    const messagesArray = Object.values(messagesObj);
+
+    messagesArray.forEach(m => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = "bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 max-w-[85%]";
+        msgDiv.innerHTML = `
+            <div class="flex justify-between items-center gap-4 mb-1">
+                <strong class="text-[11px] text-ocean dark:text-ocean-light">${m.sender}</strong>
+                <span class="text-[9px] text-gray-400">${m.time}</span>
+            </div>
+            <p class="text-xs text-gray-700 dark:text-gray-200">${m.text}</p>
+        `;
+        chatMessages.appendChild(msgDiv);
+    });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// إرسال رسالة مباشرة إلى Firebase
+sendChatBtn.addEventListener('click', () => {
+    if (currentGroupData && currentGroupData.isMuted) return;
+    const text = chatInput.value.trim();
+    if (!text || !activeGroupCode) return;
+
+    const userName = getUserName();
+    const messagesRef = ref(db, `groups/${activeGroupCode}/messages`);
+    push(messagesRef, {
+        sender: userName,
+        text: text,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    chatInput.value = '';
+});
+
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        sendChatBtn.click();
+    }
+});
+
+document.getElementById('copyInviteLinkBtn').addEventListener('click', () => {
+    if (activeGroupCode) {
+        navigator.clipboard.writeText(activeGroupCode).then(() => {
+            alert(currentLanguage === 'ar' ? 'تم نسخ رمز المجموعة للحافظة!' : 'Group code copied to clipboard!');
+        }).catch(() => {
+            const dummy = document.createElement("input");
+            document.body.appendChild(dummy);
+            dummy.value = activeGroupCode;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            alert(currentLanguage === 'ar' ? 'تم نسخ رمز المجموعة للحافظة!' : 'Group code copied to clipboard!');
+        });
+    }
+});
+
+/* ================= CONTACT FORM MODULE ================= */
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.textContent = 'جاري الإرسال...';
+    submitBtn.disabled = true;
+
+    const templateParams = {
+        from_name: document.getElementById('cName').value,
+        reply_to: document.getElementById('cEmail').value,
+        message: document.getElementById('cMessage').value
+    };
+
+    emailjs.send('service_xh7i5tn', 'template_sc7urvf', templateParams)
+        .then(() => {
+            document.getElementById('contactSuccessMsg').classList.remove('hidden');
+            submitBtn.textContent = 'إرسال الرسالة';
+            submitBtn.disabled = false;
+            this.reset();
+
+            setTimeout(() => {
+                document.getElementById('contactSuccessMsg').classList.add('hidden');
+            }, 4000);
+        }, (error) => {
+            alert('حدث خطأ أثناء الإرسال، يرجى التأكد من البيانات والمحاولة مجدداً.');
+            console.error('EmailJS Error Details:', error);
+            submitBtn.textContent = 'إرسال الرسالة';
+            submitBtn.disabled = false;
+        });
+});
+
+/* INITIALIZE ALL COMPONENTS */
+function initializeAppMain() {
     totalSeconds = getPhaseDuration();
     remainingSeconds = totalSeconds;
     loadTheme();
     loadHistory();
+    renderSummaries();
+    renderHabits();
+    renderGroups();
     updateLanguage();
     updateScreen();
 }
 
-initialize();
+initializeAppMain();

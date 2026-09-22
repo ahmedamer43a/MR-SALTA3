@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
-
+<html lang="ar" dir="rtl">
 <head>
     <meta name="google-site-verification" content="Du2sq9oNDRl0sGVVX6qxY4wj94XJ8X3qknvQCb8QY2w" />
     <meta name="description" content="MR SALTA3 is a fun and simple Pomodoro study timer with study sessions, breaks, statistics, and customizable alarms.">
     <meta name="keywords" content="Mr Salta3, Pomodoro timer, study timer, تايمر مذاكرة, مستر سلطع">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MR SALTA3 - Study Timer</title>
+    <meta name="description" content="MR SALTA3 - Study Hub & Pomodoro Timer">
+    <title>MR SALTA3 - Study Hub & Community</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
+<body class="relative z-10 transition-colors duration-300">
 
-<body>
-
-    <!-- ================= BACKGROUND ================= -->
     <div class="ocean-background">
         <div class="bubble bubble-1"></div>
         <div class="bubble bubble-2"></div>
@@ -22,202 +22,345 @@
         <div class="bubble bubble-5"></div>
     </div>
 
-    <!-- ================= MAIN ================= -->
-    <main class="container">
+    <!-- Global Zen Mode Exit Button (Fixed at Bottom-Left for all pages) -->
+    <button id="exitZenBtn" class="hidden fixed bottom-4 left-4 bg-coral text-white font-bold px-4 py-2.5 rounded-full z-50 text-sm shadow-2xl hover:bg-coral-dark transition flex items-center gap-2 border-2 border-white">
+        ✕ الخروج من وضع التركيز
+    </button>
 
-        <!-- ================= HEADER ================= -->
-        <header class="header">
-            <div class="logo">
-                <span>MR</span> SALTA3
+    <div class="container mx-auto px-4 py-6 max-w-6xl relative z-10">
+
+        <header id="mainHeader" class="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div class="logo text-3xl font-black text-white tracking-wider drop-shadow-md">
+                <span>MR</span> SALTA3 <span class="text-xs font-semibold px-2 py-1 bg-white/20 rounded-full text-sand">HUB</span>
             </div>
 
-            <div class="header-actions">
-                <!-- Theme Toggle Button -->
-                <button id="themeToggleBtn" class="action-btn" type="button" title="Toggle Theme">🌙</button>
-                <!-- Zen Mode Button -->
-                <button id="zenModeBtn" class="action-btn" type="button" title="Zen Mode">🖥️</button>
-                <!-- Language Switcher -->
-                <div class="language-switch">
-                    <button id="enBtn" class="language-btn active" type="button">EN</button>
-                    <button id="arBtn" class="language-btn" type="button">AR</button>
+            <div class="flex items-center gap-3">
+                <button id="themeToggleBtn" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-lg flex items-center justify-center transition" title="Toggle Theme">🌙</button>
+                <button id="zenModeBtn" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-lg flex items-center justify-center transition" title="Zen Mode">🖥️</button>
+                <div class="language-switch flex gap-1 p-1 rounded-full bg-white/20 backdrop-blur-md">
+                    <button id="arBtn" class="px-3 py-1 text-sm font-bold rounded-full bg-white text-ocean-dark transition">AR</button>
+                    <button id="enBtn" class="px-3 py-1 text-sm font-bold rounded-full text-white hover:bg-white/10 transition">EN</button>
                 </div>
             </div>
         </header>
 
-        <!-- ================= APP ================= -->
-        <div class="app-layout">
+        <nav id="navigationTabs" class="flex overflow-x-auto gap-2 bg-white/40 dark:bg-black/30 backdrop-blur-md p-2 rounded-2xl mb-6 border border-white/20">
+            <button data-tab="timer" class="nav-tab active flex-1 min-w-[120px] py-2.5 px-4 rounded-xl font-bold text-center transition bg-white dark:bg-ocean-dark shadow text-ocean-dark dark:text-white">⏱️ <span data-i18n="navTimer">التايمر</span></button>
+            <button data-tab="summaries" class="nav-tab flex-1 min-w-[120px] py-2.5 px-4 rounded-xl font-bold text-center transition hover:bg-white/30 text-white">📚 <span data-i18n="navSummaries">الملخصات</span></button>
+            <button data-tab="habits" class="nav-tab flex-1 min-w-[120px] py-2.5 px-4 rounded-xl font-bold text-center transition hover:bg-white/30 text-white">✅ <span data-i18n="navHabits">متتبع العادات</span></button>
+            <button data-tab="groups" class="nav-tab flex-1 min-w-[120px] py-2.5 px-4 rounded-xl font-bold text-center transition hover:bg-white/30 text-white">👥 <span data-i18n="navGroups">المجموعات الخاصة</span></button>
+            <button data-tab="contact" class="nav-tab flex-1 min-w-[120px] py-2.5 px-4 rounded-xl font-bold text-center transition hover:bg-white/30 text-white">📩 <span data-i18n="navContact">تواصل معنا</span></button>
+        </nav>
 
-            <!-- ================= TIMER CARD ================= -->
-            <section class="timer-card" id="timerCard">
+        <!-- ================= SECTION 1: TIMER ================= -->
+        <div id="tab-timer" class="tab-content block">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" id="timerGrid">
 
-                <button id="exitZenBtn" class="exit-zen-btn" type="button">✕ Exit Zen Mode</button>
+                <!-- TIMER CARD -->
+                <section class="lg:col-span-7 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/20 relative" id="timerCard">
+                    <!-- Phase Switcher Buttons -->
+                    <div class="flex justify-center gap-2 mb-6 bg-slate-100 dark:bg-gray-800 p-1.5 rounded-2xl">
+                        <button id="phaseStudyBtn" class="flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition">المذاكرة</button>
+                        <button id="phaseShortBtn" class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">استراحة قصيرة</button>
+                        <button id="phaseLongBtn" class="flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">استراحة طويلة</button>
+                    </div>
 
-                <!-- PHASE SWITCHER BUTTONS -->
-                <div class="phase-switcher">
-                    <button id="phaseStudyBtn" class="phase-btn active" type="button">Study</button>
-                    <button id="phaseShortBtn" class="phase-btn" type="button">Short Break</button>
-                    <button id="phaseLongBtn" class="phase-btn" type="button">Long Break</button>
-                </div>
-
-                <!-- CRAB -->
-                <div class="character-area">
-                    <div class="crab state-study" id="crab">
-                        <div class="sunglasses"></div>
-                        <div class="zzz"><span>z</span><span>z</span><span>Z</span></div>
-                        <div class="eye eye-left"><div class="pupil"></div></div>
-                        <div class="eye eye-right"><div class="pupil"></div></div>
-                        <div class="crab-body">
-                            <div class="mouth"></div>
+                    <!-- Animated Crab Area -->
+                    <div class="character-area my-2">
+                        <div class="crab state-study" id="crab">
+                            <div class="sunglasses"></div>
+                            <div class="zzz"><span>z</span><span>z</span><span>Z</span></div>
+                            <div class="eye eye-left"><div class="pupil"></div></div>
+                            <div class="eye eye-right"><div class="pupil"></div></div>
+                            <div class="crab-body">
+                                <div class="mouth"></div>
+                            </div>
+                            <div class="claw claw-left"></div>
+                            <div class="claw claw-right"></div>
+                            <div class="leg leg-1"></div>
+                            <div class="leg leg-2"></div>
+                            <div class="leg leg-3"></div>
+                            <div class="leg leg-4"></div>
                         </div>
-                        <div class="claw claw-left"></div>
-                        <div class="claw claw-right"></div>
-                        <div class="leg leg-1"></div>
-                        <div class="leg leg-2"></div>
-                        <div class="leg leg-3"></div>
-                        <div class="leg leg-4"></div>
-                    </div>
-                </div>
-
-                <!-- MODE -->
-                <div class="mode" id="mode">STUDY TIME</div>
-
-                <!-- TIMER -->
-                <div class="timer" id="timer">25:00</div>
-
-                <!-- STATUS -->
-                <div class="status" id="status">Set your time and press Start.</div>
-
-                <!-- PROGRESS -->
-                <div class="progress-container">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-
-                <!-- BUTTONS -->
-                <div class="controls">
-                    <button id="startBtn" class="main-btn" type="button">▶ Start</button>
-                    <button id="pauseBtn" class="secondary-btn" type="button">⏸ Pause</button>
-                    <button id="resetBtn" class="secondary-btn" type="button">↻ Reset</button>
-                </div>
-            </section>
-
-            <!-- ================= SETTINGS ================= -->
-            <section class="settings-card" id="settingsCard">
-
-                <h2 id="settingsTitle">Timer Settings</h2>
-
-                <div class="settings-grid">
-                    <!-- STUDY -->
-                    <div class="input-box">
-                        <label id="studyLabel">Study Minutes</label>
-                        <input id="studyInput" type="number" min="1" max="180" value="25">
                     </div>
 
-                    <!-- SHORT BREAK -->
-                    <div class="input-box">
-                        <label id="shortLabel">Short Break</label>
-                        <input id="shortInput" type="number" min="1" max="60" value="5">
+                    <!-- Mode Display -->
+                    <div class="text-center font-black text-ocean tracking-widest text-sm uppercase my-2" id="mode">وقت المذاكرة</div>
+
+                    <!-- Timer Count -->
+                    <div class="text-center text-7xl lg:text-8xl font-black text-ocean-dark dark:text-ocean-light tracking-tight my-2" id="timer">25:00</div>
+
+                    <!-- Status Text -->
+                    <div class="text-center text-sm font-medium text-gray-600 dark:text-gray-300 h-6 mb-4" id="status">ظبط الوقت واضغط ابدأ.</div>
+
+                    <!-- Progress Bar -->
+                    <div class="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-6">
+                        <div class="h-full bg-gradient-to-r from-ocean to-coral transition-all duration-300 w-0" id="progressBar"></div>
                     </div>
 
-                    <!-- LONG BREAK -->
-                    <div class="input-box">
-                        <label id="longLabel">Long Break</label>
-                        <input id="longInput" type="number" min="1" max="120" value="15">
+                    <!-- Controls Buttons -->
+                    <div class="flex justify-center gap-3 flex-wrap">
+                        <button id="startBtn" class="px-8 py-3 bg-ocean-dark dark:bg-ocean text-white dark:text-ocean-dark font-extrabold rounded-2xl shadow-lg hover:opacity-90 transform hover:-translate-y-0.5 transition">▶ ابدأ</button>
+                        <button id="pauseBtn" class="px-6 py-3 bg-slate-100 dark:bg-gray-800 text-ocean-dark dark:text-white font-extrabold rounded-2xl hover:bg-slate-200 dark:hover:bg-gray-700 transition">⏸ إيقاف</button>
+                        <button id="resetBtn" class="px-6 py-3 bg-slate-100 dark:bg-gray-800 text-ocean-dark dark:text-white font-extrabold rounded-2xl hover:bg-slate-200 dark:hover:bg-gray-700 transition">↻ إعادة ضبط</button>
                     </div>
+                </section>
 
-                    <!-- SESSIONS -->
-                    <div class="input-box">
-                        <label id="sessionsLabel">Sessions Before Long Break</label>
-                        <input id="sessionsInput" type="number" min="1" max="20" value="4">
-                    </div>
+                <!-- SETTINGS & STATS CARD -->
+                <section class="lg:col-span-5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/20" id="settingsCard">
+                    <h2 class="text-xl font-bold text-ocean-dark dark:text-ocean-light mb-4" id="settingsTitle">إعدادات التايمر</h2>
 
-                    <!-- ALARM REPEAT -->
-                    <div class="input-box">
-                        <label id="alarmLabel">Alarm Repetitions</label>
-                        <input id="alarmInput" type="number" min="1" max="20" value="3">
-                    </div>
-
-                    <!-- ALARM SELECTOR -->
-                    <div class="input-box">
-                        <label id="soundSelectLabel">Alarm Sound</label>
-                        <select id="soundSelect" class="custom-select">
-                            <option value="default">Mr Salta3 (Default)</option>
-                            <option value="digital">Digital Beep</option>
-                            <option value="bell">Classic Bell</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- ================= AUTO SETTINGS ================= -->
-                <div class="auto-settings">
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <strong id="autoBreakTitle">Auto Break</strong>
-                            <small id="autoBreakText">Start breaks automatically</small>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1" id="studyLabel">دقائق المذاكرة</label>
+                            <input id="studyInput" type="number" min="1" max="180" value="25" class="w-full h-11 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 font-bold text-ocean-dark dark:text-white bg-transparent focus:border-ocean outline-none">
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="autoBreak">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <strong id="autoStudyTitle">Auto Study</strong>
-                            <small id="autoStudyText">Start studying automatically</small>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1" id="shortLabel">البريك القصير</label>
+                            <input id="shortInput" type="number" min="1" max="60" value="5" class="w-full h-11 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 font-bold text-ocean-dark dark:text-white bg-transparent focus:border-ocean outline-none">
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="autoStudy">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <strong id="notifTitle">Browser Notifications</strong>
-                            <small id="notifText">Get notified when phase ends</small>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1" id="longLabel">اللونج بريك</label>
+                            <input id="longInput" type="number" min="1" max="120" value="15" class="w-full h-11 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 font-bold text-ocean-dark dark:text-white bg-transparent focus:border-ocean outline-none">
                         </div>
-                        <label class="switch">
-                            <input type="checkbox" id="notifToggle">
-                            <span class="slider"></span>
-                        </label>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1" id="sessionsLabel">السيشنز قبل اللونج بريك</label>
+                            <input id="sessionsInput" type="number" min="1" max="20" value="4" class="w-full h-11 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 font-bold text-ocean-dark dark:text-white bg-transparent focus:border-ocean outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1" id="alarmLabel">عدد مرات الرنة</label>
+                            <input id="alarmInput" type="number" min="1" max="20" value="3" class="w-full h-11 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-3 font-bold text-ocean-dark dark:text-white bg-transparent focus:border-ocean outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1" id="soundSelectLabel">صوت التنبيه</label>
+                            <select id="soundSelect" class="w-full h-11 border-2 border-gray-200 dark:border-gray-700 rounded-xl px-2 text-xs font-bold text-ocean-dark dark:text-white bg-transparent focus:border-ocean outline-none">
+                                <option value="default" class="dark:bg-gray-800">Mr Salta3 (Default)</option>
+                                <option value="digital" class="dark:bg-gray-800">Digital Beep</option>
+                                <option value="bell" class="dark:bg-gray-800">Classic Bell</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <!-- ================= STATS ================= -->
-                <div class="stats">
-                    <div class="stat">
-                        <span id="sessionsText">Sessions Completed</span>
-                        <strong id="completedSessions">0</strong>
-                    </div>
-                    <div class="stat">
-                        <span id="totalText">Total Study Time</span>
-                        <strong id="totalStudy">0m</strong>
-                    </div>
-                </div>
+                    <!-- Auto Toggles -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between items-center bg-slate-100 dark:bg-gray-800 p-3 rounded-xl">
+                            <div>
+                                <strong class="block text-xs text-ocean-dark dark:text-ocean-light" id="autoBreakTitle">البريك التلقائي</strong>
+                                <small class="text-[10px] text-gray-500" id="autoBreakText">ابدأ البريك تلقائيًا</small>
+                            </div>
+                            <label class="switch"><input type="checkbox" id="autoBreak"><span class="slider"></span></label>
+                        </div>
 
-                <!-- ================= HISTORY ================= -->
-                <div class="history-section">
-                    <div class="history-header">
-                        <h3 id="historyTitle">Today's Sessions</h3>
-                        <button id="clearHistoryBtn" class="clear-btn" type="button">Clear</button>
-                    </div>
-                    <ul id="historyList" class="history-list"></ul>
-                </div>
+                        <div class="flex justify-between items-center bg-slate-100 dark:bg-gray-800 p-3 rounded-xl">
+                            <div>
+                                <strong class="block text-xs text-ocean-dark dark:text-ocean-light" id="autoStudyTitle">المذاكرة التلقائية</strong>
+                                <small class="text-[10px] text-gray-500" id="autoStudyText">ابدأ المذاكرة تلقائيًا</small>
+                            </div>
+                            <label class="switch"><input type="checkbox" id="autoStudy"><span class="slider"></span></label>
+                        </div>
 
-                <!-- TIP -->
-                <div class="tip">
-                    💡 <span id="tipText">Set your times and press Start.</span>
-                </div>
-            </section>
+                        <div class="flex justify-between items-center bg-slate-100 dark:bg-gray-800 p-3 rounded-xl">
+                            <div>
+                                <strong class="block text-xs text-ocean-dark dark:text-ocean-light" id="notifTitle">إشعارات المتصفح</strong>
+                                <small class="text-[10px] text-gray-500" id="notifText">تنبيهك عند انتهاء الوقت</small>
+                            </div>
+                            <label class="switch"><input type="checkbox" id="notifToggle"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-slate-100 dark:bg-gray-800 p-3 rounded-xl text-center">
+                            <span class="block text-[11px] font-bold text-gray-500" id="sessionsText">السيشنز المكتملة</span>
+                            <strong class="text-2xl text-ocean-dark dark:text-ocean-light" id="completedSessions">0</strong>
+                        </div>
+                        <div class="bg-slate-100 dark:bg-gray-800 p-3 rounded-xl text-center">
+                            <span class="block text-[11px] font-bold text-gray-500" id="totalText">إجمالي وقت المذاكرة</span>
+                            <strong class="text-2xl text-ocean-dark dark:text-ocean-light" id="totalStudy">0m</strong>
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="bg-slate-100 dark:bg-gray-800 p-3 rounded-xl">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xs font-bold text-ocean-dark dark:text-ocean-light" id="historyTitle">جلسات اليوم</h3>
+                            <button id="clearHistoryBtn" class="text-xs text-coral font-bold hover:underline">مسح</button>
+                        </div>
+                        <ul id="historyList" class="space-y-1.5 max-h-28 overflow-y-auto text-xs"></ul>
+                    </div>
+
+                    <!-- Tip -->
+                    <div class="mt-4 p-3 bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-semibold">
+                        💡 <span id="tipText">ظبط الأوقات واضغط ابدأ.</span>
+                    </div>
+                </section>
+            </div>
         </div>
-    </main>
 
-    <!-- ================= AUDIO ================= -->
+        <!-- ================= SECTION 2: SUMMARIES ================= -->
+        <div id="tab-summaries" class="tab-content hidden">
+            <div class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/20">
+                <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold text-ocean-dark dark:text-ocean-light" data-i18n="summariesTitle">مكتبة الملخصات والملاحظات</h2>
+                    <button id="openUploadSummaryBtn" class="px-5 py-2.5 bg-ocean text-white font-bold rounded-xl hover:bg-ocean-dark transition flex items-center gap-2">+ <span data-i18n="addSummaryBtn">إضافة ملخص جديد</span></button>
+                </div>
+
+                <!-- Form Modal / Drawer -->
+                <div id="summaryFormCard" class="hidden mb-6 p-5 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-ocean/20">
+                    <h3 class="font-bold mb-3 text-ocean-dark dark:text-ocean-light" data-i18n="newSummaryHeader">نشر ملخص دراسي</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <input id="sumTitle" type="text" placeholder="عنوان الملخص (مثال: ملخص الفيزياء - الفصل الأول)" class="w-full h-11 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 font-medium text-sm">
+                        <input id="sumSubject" type="text" placeholder="المادة (مثال: فيزياء، أحياء، رياضيات)" class="w-full h-11 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 font-medium text-sm">
+                    </div>
+                    <textarea id="sumContent" rows="3" placeholder="محتوى الملخص أو تفاصيل الملاحظة..." class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 font-medium text-sm mb-3"></textarea>
+                    
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold mb-1 text-gray-600 dark:text-gray-300" data-i18n="attachFile">مرفق ملف (اختياري - PDF/صورة):</label>
+                        <input id="sumFile" type="file" accept="image/*,.pdf" class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-ocean file:text-white hover:file:bg-ocean-dark">
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <button id="cancelSummaryBtn" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-xs font-bold rounded-xl" data-i18n="cancel">إلغاء</button>
+                        <button id="saveSummaryBtn" class="px-5 py-2 bg-ocean text-white text-xs font-bold rounded-xl" data-i18n="publish">نشر الملخص</button>
+                    </div>
+                </div>
+
+                <!-- Summaries List -->
+                <div id="summariesList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 3: HABIT TRACKER ================= -->
+        <div id="tab-habits" class="tab-content hidden">
+            <div class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/20">
+                <h2 class="text-2xl font-bold text-ocean-dark dark:text-ocean-light mb-4" data-i18n="habitsTitle">متتبع العادات الدراسية</h2>
+                
+                <div class="flex gap-2 mb-6">
+                    <input id="habitInput" type="text" placeholder="اكتب عادة جديدة (مثال: مراجعة الكلمات اليومية، حل 10 أساليب)..." class="flex-1 h-12 px-4 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-transparent font-semibold">
+                    <button id="addHabitBtn" class="px-6 h-12 bg-ocean text-white font-bold rounded-2xl hover:bg-ocean-dark transition" data-i18n="addHabit">إضافة عادة</button>
+                </div>
+
+                <div id="habitsList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 4: PRIVATE GROUPS ================= -->
+        <div id="tab-groups" class="tab-content hidden">
+            <div class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/20">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    <!-- Groups Sidebar -->
+                    <div class="lg:col-span-4 border-b lg:border-b-0 lg:border-l border-gray-200 dark:border-gray-700 pl-0 lg:pl-6 pb-6 lg:pb-0">
+                        <h2 class="text-xl font-bold text-ocean-dark dark:text-ocean-light mb-4" data-i18n="groupsTitle">المجموعات الخاصة</h2>
+                        
+                        <!-- Join by Code -->
+                        <div class="mb-4 bg-slate-100 dark:bg-gray-800 p-3 rounded-2xl">
+                            <label class="block text-xs font-bold mb-1 text-gray-600 dark:text-gray-300" data-i18n="joinCodeLabel">الانضمام بكود المجموعات:</label>
+                            <div class="flex gap-2">
+                                <input id="joinCodeInput" type="text" placeholder="أدخل الكود..." class="w-full h-10 px-3 rounded-xl border border-gray-300 dark:border-gray-600 text-xs font-bold uppercase">
+                                <button id="joinGroupBtn" class="px-4 bg-ocean text-white font-bold text-xs rounded-xl hover:bg-ocean-dark transition" data-i18n="join">انضمام</button>
+                            </div>
+                        </div>
+
+                        <!-- Create Group -->
+                        <div class="mb-4">
+                            <button id="openCreateGroupBtn" class="w-full py-2.5 bg-coral text-white font-bold text-xs rounded-xl hover:bg-coral-dark transition" data-i18n="createGroupBtn">+ إنشاء مجموعة دراسية جديدة</button>
+                        </div>
+
+                        <div id="createGroupCard" class="hidden mb-4 p-3 bg-slate-100 dark:bg-gray-800 rounded-2xl border border-coral/30">
+                            <input id="newGroupName" type="text" placeholder="اسم المجموعة..." class="w-full h-10 px-3 rounded-xl border border-gray-300 dark:border-gray-600 text-xs mb-2">
+                            <div class="flex justify-end gap-2">
+                                <button id="cancelCreateGroupBtn" class="px-3 py-1.5 bg-gray-300 text-xs font-bold rounded-lg" data-i18n="cancel">إلغاء</button>
+                                <button id="saveCreateGroupBtn" class="px-3 py-1.5 bg-coral text-white text-xs font-bold rounded-lg" data-i18n="create">إنشاء</button>
+                            </div>
+                        </div>
+
+                        <!-- My Groups List -->
+                        <h3 class="text-xs font-bold text-gray-500 mb-2" data-i18n="myGroupsHeader">مجموعاتي:</h3>
+                        <div id="myGroupsList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- Active Group Chat Window -->
+                    <div class="lg:col-span-8 flex flex-col h-[480px]" id="chatContainer">
+                        <div id="noGroupSelected" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+                            <span class="text-4xl mb-2">👥</span>
+                            <p class="text-sm font-semibold" data-i18n="selectGroupHint">اختر مجموعة من القائمة أو انضم برمز للبدء في الدردشة</p>
+                        </div>
+
+                        <div id="activeGroupContent" class="hidden flex-1 flex flex-col h-full">
+                            <!-- Group Header -->
+                            <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 flex-wrap gap-2">
+                                <div>
+                                    <h3 id="chatGroupName" class="font-bold text-lg text-ocean-dark dark:text-ocean-light">اسم المجموعة</h3>
+                                    <span id="chatGroupCode" class="text-xs text-gray-500 font-mono"></span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="adminMuteBtn" class="hidden px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition">🔇 كتم الدردشة</button>
+                                    <button id="leaveGroupBtn" class="px-3 py-1.5 bg-coral hover:bg-coral-dark text-white text-xs font-bold rounded-xl transition">🚪 مغادرة المجموعة</button>
+                                    <button id="copyInviteLinkBtn" class="px-3 py-1.5 bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 text-xs font-bold rounded-xl transition">📋 <span data-i18n="copyInvite">نسخ رابط الدعوة</span></button>
+                                </div>
+                            </div>
+
+                            <!-- Chat Messages -->
+                            <div id="chatMessages" class="flex-1 overflow-y-auto my-3 space-y-3 p-2 bg-slate-50 dark:bg-gray-800/50 rounded-2xl"></div>
+
+                            <!-- Send Input -->
+                            <div class="flex gap-2 relative">
+                                <input id="chatInput" type="text" placeholder="اكتب رسالتك للمجموعة..." class="flex-1 h-11 px-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-xs font-semibold">
+                                <button id="sendChatBtn" class="px-5 bg-ocean text-white font-bold text-xs rounded-xl hover:bg-ocean-dark transition" data-i18n="send">إرسال</button>
+                            </div>
+                            <div id="chatMutedNotice" class="hidden text-center text-xs text-coral font-bold py-1 bg-coral/10 rounded-lg mt-1">
+                                🔇 الدردشة مغلقة حالياً من قبل أدمن المجموعة.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 5: CONTACT US ================= -->
+        <div id="tab-contact" class="tab-content hidden">
+            <div class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl p-6 shadow-xl border border-white/20 max-w-2xl mx-auto">
+                <h2 class="text-2xl font-bold text-ocean-dark dark:text-ocean-light mb-2" data-i18n="contactTitle">تواصل معنا</h2>
+                <p class="text-xs text-gray-500 mb-6" data-i18n="contactSub">لديك اقتراح أو واجهتك مشكلة؟ يسعدنا تواصلك مع فريق MR SALTA3</p>
+
+               <form id="contactForm" class="space-y-4">
+               <div>
+                   <label class="block text-xs font-bold mb-1" data-i18n="contactName">الاسم الكامل</label>
+                   <input id="cName" name="from_name" type="text" required class="w-full h-11 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm">
+               </div>
+               <div>
+                   <label class="block text-xs font-bold mb-1" data-i18n="contactEmail">البريد الإلكتروني</label>
+                   <input id="cEmail" name="reply_to" type="email" required class="w-full h-11 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm">
+               </div>
+               <div>
+                   <label class="block text-xs font-bold mb-1" data-i18n="contactMessage">الرسالة</label>
+                   <textarea id="cMessage" name="message" rows="4" required class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm"></textarea>
+               </div>
+               <button type="submit" id="submitBtn" class="w-full py-3 bg-ocean text-white font-extrabold text-sm rounded-xl hover:bg-ocean-dark transition" data-i18n="contactSend">إرسال الرسالة</button>
+           </form>
+                <div id="contactSuccessMsg" class="hidden mt-4 p-3 bg-green-100 text-green-800 rounded-xl text-xs font-bold text-center">تم إرسال رسالتك بنجاح! سنقوم بالرد عليك قريباً.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Sound Effect Audio File -->
     <audio id="alarmSound" preload="auto">
         <source src="sounds/alarm.mpeg" type="audio/mpeg">
     </audio>
 
-    <!-- JAVASCRIPT -->
-    <script src="script.js"></script>
+    <!-- Script Module -->
+<!-- 1. EmailJS SDK -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      emailjs.init("5iANM1rMJkKELMYmC");
+   })();
+</script>
+
+<!-- 2. Main Script -->
+<script type="module" src="script.js"></script>
 </body>
 </html>
