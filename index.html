@@ -6,479 +6,218 @@
     <meta name="description" content="MR SALTA3 is a fun and simple Pomodoro study timer with study sessions, breaks, statistics, and customizable alarms.">
     <meta name="keywords" content="Mr Salta3, Pomodoro timer, study timer, تايمر مذاكرة, مستر سلطع">
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>MR SALTA3 - Study Timer</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
-
 
 <body>
 
     <!-- ================= BACKGROUND ================= -->
-
     <div class="ocean-background">
-
         <div class="bubble bubble-1"></div>
         <div class="bubble bubble-2"></div>
         <div class="bubble bubble-3"></div>
         <div class="bubble bubble-4"></div>
         <div class="bubble bubble-5"></div>
-
     </div>
 
-
     <!-- ================= MAIN ================= -->
-
     <main class="container">
 
-
         <!-- ================= HEADER ================= -->
-
         <header class="header">
-
             <div class="logo">
                 <span>MR</span> SALTA3
             </div>
 
-
             <div class="header-actions">
-
                 <!-- Theme Toggle Button -->
-                <button id="themeToggleBtn" class="action-btn" type="button" title="Toggle Theme">
-                    🌙
-                </button>
-
+                <button id="themeToggleBtn" class="action-btn" type="button" title="Toggle Theme">🌙</button>
                 <!-- Zen Mode Button -->
-                <button id="zenModeBtn" class="action-btn" type="button" title="Zen Mode">
-                    🖥️
-                </button>
-
+                <button id="zenModeBtn" class="action-btn" type="button" title="Zen Mode">🖥️</button>
                 <!-- Language Switcher -->
                 <div class="language-switch">
-
-                    <button id="enBtn" class="language-btn active" type="button">
-                        EN
-                    </button>
-
-                    <button id="arBtn" class="language-btn" type="button">
-                        AR
-                    </button>
-
+                    <button id="enBtn" class="language-btn active" type="button">EN</button>
+                    <button id="arBtn" class="language-btn" type="button">AR</button>
                 </div>
-
             </div>
-
         </header>
 
-
-
         <!-- ================= APP ================= -->
-
         <div class="app-layout">
 
-
             <!-- ================= TIMER CARD ================= -->
-
             <section class="timer-card" id="timerCard">
 
-                <!-- Exit Zen Mode Button (Hidden by default) -->
-                <button id="exitZenBtn" class="exit-zen-btn" type="button">
-                    ✕ Exit Zen Mode
-                </button>
+                <button id="exitZenBtn" class="exit-zen-btn" type="button">✕ Exit Zen Mode</button>
 
+                <!-- PHASE SWITCHER BUTTONS -->
+                <div class="phase-switcher">
+                    <button id="phaseStudyBtn" class="phase-btn active" type="button">Study</button>
+                    <button id="phaseShortBtn" class="phase-btn" type="button">Short Break</button>
+                    <button id="phaseLongBtn" class="phase-btn" type="button">Long Break</button>
+                </div>
 
                 <!-- CRAB -->
-
                 <div class="character-area">
-
-                    <div class="crab" id="crab">
-
-
-                        <div class="eye eye-left">
-                            <div class="pupil"></div>
+                    <div class="crab state-study" id="crab">
+                        <div class="sunglasses"></div>
+                        <div class="zzz"><span>z</span><span>z</span><span>Z</span></div>
+                        <div class="eye eye-left"><div class="pupil"></div></div>
+                        <div class="eye eye-right"><div class="pupil"></div></div>
+                        <div class="crab-body">
+                            <div class="mouth"></div>
                         </div>
-
-
-                        <div class="eye eye-right">
-                            <div class="pupil"></div>
-                        </div>
-
-
-                        <div class="crab-body"></div>
-
-
                         <div class="claw claw-left"></div>
-
                         <div class="claw claw-right"></div>
-
-
                         <div class="leg leg-1"></div>
-
                         <div class="leg leg-2"></div>
-
                         <div class="leg leg-3"></div>
-
                         <div class="leg leg-4"></div>
-
                     </div>
-
                 </div>
-
-
 
                 <!-- MODE -->
-
-                <div class="mode" id="mode">
-
-                    STUDY TIME
-
-                </div>
-
-
+                <div class="mode" id="mode">STUDY TIME</div>
 
                 <!-- TIMER -->
-
-                <div class="timer" id="timer">
-
-                    25:00
-
-                </div>
-
-
+                <div class="timer" id="timer">25:00</div>
 
                 <!-- STATUS -->
-
-                <div class="status" id="status">
-
-                    Set your time and press Start.
-
-                </div>
-
-
+                <div class="status" id="status">Set your time and press Start.</div>
 
                 <!-- PROGRESS -->
-
                 <div class="progress-container">
-
-                    <div class="progress-bar" id="progressBar">
-
-                    </div>
-
+                    <div class="progress-bar" id="progressBar"></div>
                 </div>
-
-
 
                 <!-- BUTTONS -->
-
                 <div class="controls">
-
-
-                    <button id="startBtn" class="main-btn" type="button">
-
-                        ▶ Start
-
-                    </button>
-
-
-                    <button id="pauseBtn" class="secondary-btn" type="button">
-
-                        ⏸ Pause
-
-                    </button>
-
-
-                    <button id="resetBtn" class="secondary-btn" type="button">
-
-                        ↻ Reset
-
-                    </button>
-
-
+                    <button id="startBtn" class="main-btn" type="button">▶ Start</button>
+                    <button id="pauseBtn" class="secondary-btn" type="button">⏸ Pause</button>
+                    <button id="resetBtn" class="secondary-btn" type="button">↻ Reset</button>
                 </div>
-
             </section>
 
-
-
             <!-- ================= SETTINGS ================= -->
-
             <section class="settings-card" id="settingsCard">
 
-
-                <h2 id="settingsTitle">
-                    Timer Settings
-                </h2>
-
-
+                <h2 id="settingsTitle">Timer Settings</h2>
 
                 <div class="settings-grid">
-
-
                     <!-- STUDY -->
-
                     <div class="input-box">
-
-                        <label id="studyLabel">
-                            Study Minutes
-                        </label>
-
+                        <label id="studyLabel">Study Minutes</label>
                         <input id="studyInput" type="number" min="1" max="180" value="25">
-
                     </div>
-
-
 
                     <!-- SHORT BREAK -->
-
                     <div class="input-box">
-
-                        <label id="shortLabel">
-                            Short Break
-                        </label>
-
+                        <label id="shortLabel">Short Break</label>
                         <input id="shortInput" type="number" min="1" max="60" value="5">
-
                     </div>
-
-
 
                     <!-- LONG BREAK -->
-
                     <div class="input-box">
-
-                        <label id="longLabel">
-                            Long Break
-                        </label>
-
+                        <label id="longLabel">Long Break</label>
                         <input id="longInput" type="number" min="1" max="120" value="15">
-
                     </div>
-
-
 
                     <!-- SESSIONS -->
-
                     <div class="input-box">
-
-                        <label id="sessionsLabel">
-                            Sessions Before Long Break
-                        </label>
-
+                        <label id="sessionsLabel">Sessions Before Long Break</label>
                         <input id="sessionsInput" type="number" min="1" max="20" value="4">
-
                     </div>
 
-
-
                     <!-- ALARM REPEAT -->
-
                     <div class="input-box">
-
-                        <label id="alarmLabel">
-                            Alarm Repetitions
-                        </label>
-
+                        <label id="alarmLabel">Alarm Repetitions</label>
                         <input id="alarmInput" type="number" min="1" max="20" value="3">
-
                     </div>
 
                     <!-- ALARM SELECTOR -->
-
                     <div class="input-box">
-
-                        <label id="soundSelectLabel">
-                            Alarm Sound
-                        </label>
-
+                        <label id="soundSelectLabel">Alarm Sound</label>
                         <select id="soundSelect" class="custom-select">
                             <option value="default">Mr Salta3 (Default)</option>
                             <option value="digital">Digital Beep</option>
                             <option value="bell">Classic Bell</option>
                         </select>
-
                     </div>
-
                 </div>
-
-
 
                 <!-- ================= AUTO SETTINGS ================= -->
-
                 <div class="auto-settings">
-
-
-                    <!-- AUTO BREAK -->
-
                     <div class="toggle-row">
-
                         <div class="toggle-info">
-
-                            <strong id="autoBreakTitle">
-                                Auto Break
-                            </strong>
-
-                            <small id="autoBreakText">
-                                Start breaks automatically
-                            </small>
-
+                            <strong id="autoBreakTitle">Auto Break</strong>
+                            <small id="autoBreakText">Start breaks automatically</small>
                         </div>
-
-
                         <label class="switch">
-
                             <input type="checkbox" id="autoBreak">
-
                             <span class="slider"></span>
-
                         </label>
-
                     </div>
 
-
-
-                    <!-- AUTO STUDY -->
-
                     <div class="toggle-row">
-
                         <div class="toggle-info">
-
-                            <strong id="autoStudyTitle">
-                                Auto Study
-                            </strong>
-
-                            <small id="autoStudyText">
-                                Start studying automatically
-                            </small>
-
+                            <strong id="autoStudyTitle">Auto Study</strong>
+                            <small id="autoStudyText">Start studying automatically</small>
                         </div>
-
-
                         <label class="switch">
-
                             <input type="checkbox" id="autoStudy">
-
                             <span class="slider"></span>
-
                         </label>
-
                     </div>
-
-
-                    <!-- NOTIFICATIONS TOGGLE -->
 
                     <div class="toggle-row">
-
                         <div class="toggle-info">
-
-                            <strong id="notifTitle">
-                                Browser Notifications
-                            </strong>
-
-                            <small id="notifText">
-                                Get notified when phase ends
-                            </small>
-
+                            <strong id="notifTitle">Browser Notifications</strong>
+                            <small id="notifText">Get notified when phase ends</small>
                         </div>
-
-
                         <label class="switch">
-
                             <input type="checkbox" id="notifToggle">
-
                             <span class="slider"></span>
-
                         </label>
-
                     </div>
-
                 </div>
-
-
 
                 <!-- ================= STATS ================= -->
-
                 <div class="stats">
-
-
                     <div class="stat">
-
-                        <span id="sessionsText">
-                            Sessions Completed
-                        </span>
-
-                        <strong id="completedSessions">
-                            0
-                        </strong>
-
+                        <span id="sessionsText">Sessions Completed</span>
+                        <strong id="completedSessions">0</strong>
                     </div>
-
-
                     <div class="stat">
-
-                        <span id="totalText">
-                            Total Study Time
-                        </span>
-
-                        <strong id="totalStudy">
-                            0m
-                        </strong>
-
+                        <span id="totalText">Total Study Time</span>
+                        <strong id="totalStudy">0m</strong>
                     </div>
-
                 </div>
 
-
-                <!-- ================= HISTORY / LOG ================= -->
-
+                <!-- ================= HISTORY ================= -->
                 <div class="history-section">
-
                     <div class="history-header">
                         <h3 id="historyTitle">Today's Sessions</h3>
                         <button id="clearHistoryBtn" class="clear-btn" type="button">Clear</button>
                     </div>
-
-                    <ul id="historyList" class="history-list">
-                        <!-- History items will be dynamically inserted here -->
-                    </ul>
-
+                    <ul id="historyList" class="history-list"></ul>
                 </div>
-
 
                 <!-- TIP -->
-
                 <div class="tip">
-
-                    💡
-
-                    <span id="tipText">
-                        Set your times and press Start.
-                    </span>
-
+                    💡 <span id="tipText">Set your times and press Start.</span>
                 </div>
-
             </section>
-
         </div>
-
     </main>
 
-
-
     <!-- ================= AUDIO ================= -->
-
     <audio id="alarmSound" preload="auto">
-        <source src="sounds/alarm.mp3.mpeg" type="audio/mpeg">
+        <source src="sounds/alarm.mpeg" type="audio/mpeg">
     </audio>
 
-
-
     <!-- JAVASCRIPT -->
-
     <script src="script.js"></script>
-
 </body>
-
 </html>
