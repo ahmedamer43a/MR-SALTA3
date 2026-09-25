@@ -1,5 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, set, get, child, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup,
+    updateProfile
+} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
 
 // إعدادات Firebase الخاصة بالمشروع
 const firebaseConfig = {
@@ -15,8 +25,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 // اسم المستخدم للشات ومعرّف الفريد للجهاز/المستخدم
+let currentUser = null;
 let currentUserName = localStorage.getItem('salta3_username') || '';
 let myUserId = localStorage.getItem('salta3_userid');
 if (!myUserId) {
@@ -113,6 +126,258 @@ document.querySelectorAll('.nav-tab').forEach(tabBtn => {
         document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
     });
 });
+
+/* ================= AUTH & PROFILE MODULE ================= */
+const authModal = document.getElementById('authModal');
+const openAuthModalBtn = document.getElementById('openAuthModalBtn');
+const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+const signInContainer = document.getElementById('signInContainer');
+const signUpContainer = document.getElementById('signUpContainer');
+const userProfileContainer = document.getElementById('userProfileContainer');
+
+const goToSignUpBtn = document.getElementById('goToSignUpBtn');
+const goToSignInBtn = document.getElementById('goToSignInBtn');
+
+const signInForm = document.getElementById('signInForm');
+const signUpForm = document.getElementById('signUpForm');
+const googleSignInBtn = document.getElementById('googleSignInBtn');
+const facebookSignInBtn = document.getElementById('facebookSignInBtn');
+const signOutBtn = document.getElementById('signOutBtn');
+
+const headerUserName = document.getElementById('headerUserName');
+const headerUserAvatar = document.getElementById('headerUserAvatar');
+const modalUserName = document.getElementById('modalUserName');
+const modalUserEmail = document.getElementById('modalUserEmail');
+const modalUserAvatar = document.getElementById('modalUserAvatar');
+const avatarFileInput = document.getElementById('avatarFileInput');
+
+// زر إظهار/إخفاء كلمة المرور
+const toggleSignInPassword = document.getElementById('toggleSignInPassword');
+const signInPassword = document.getElementById('signInPassword');
+
+if (toggleSignInPassword && signInPassword) {
+    toggleSignInPassword.addEventListener('click', () => {
+        const type = signInPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        signInPassword.setAttribute('type', type);
+        toggleSignInPassword.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+}
+
+const toggleSignUpPassword = document.getElementById('toggleSignUpPassword');
+const signUpPassword = document.getElementById('signUpPassword');
+
+if (toggleSignUpPassword && signUpPassword) {
+    toggleSignUpPassword.addEventListener('click', () => {
+        const type = signUpPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        signUpPassword.setAttribute('type', type);
+        toggleSignUpPassword.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+}
+
+openAuthModalBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
+closeAuthModalBtn.addEventListener('click', () => authModal.classList.add('hidden'));
+
+goToSignUpBtn.addEventListener('click', () => {
+    signInContainer.classList.add('hidden');
+    signUpContainer.classList.remove('hidden');
+});
+
+goToSignInBtn.addEventListener('click', () => {
+    signUpContainer.classList.add('hidden');
+    signInContainer.classList.remove('hidden');
+});
+
+// مراقبة حالة تسجيل الدخول في Firebase
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        myUserId = user.uid;
+        localStorage.setItem('salta3_userid', myUserId);
+        
+        // جلب تفاصيل إضافية للبروفايل من Realtime Database
+        const userRef = ref(db, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+        let userData = snapshot.val() || {};
+
+        currentUserName = user.displayName || userData.name || user.email.split('@')[0];
+        localStorage.setItem('salta3_username', currentUserName);
+
+        const photoURL = user.photoURL || userData.photoURL || '';
+
+        // تحديث الهيدر والـ Popup
+        headerUserName.textContent = currentUserName;
+        modalUserName.textContent = currentUserName;
+        modalUserEmail.textContent = user.email;
+
+        if (photoURL) {
+            headerUserAvatar.style.backgroundImage = `url('${photoURL}')`;
+            headerUserAvatar.textContent = '';
+            modalUserAvatar.style.backgroundImage = `url('${photoURL}')`;
+            modalUserAvatar.textContent = '';
+        } else {
+            headerUserAvatar.style.backgroundImage = '';
+            headerUserAvatar.textContent = currentUserName.charAt(0).toUpperCase();
+            modalUserAvatar.style.backgroundImage = '';
+            modalUserAvatar.textContent = currentUserName.charAt(0).toUpperCase();
+        }
+
+        signInContainer.classList.add('hidden');
+        signUpContainer.classList.add('hidden');
+        userProfileContainer.classList.remove('hidden');
+
+        // مزامنة البيانات السحابية مع الحساب الحالي
+        syncUserDataFromCloud();
+    } else {
+        currentUser = null;
+        headerUserName.textContent = 'Sign In';
+        headerUserAvatar.style.backgroundImage = '';
+        headerUserAvatar.textContent = '👤';
+
+        signInContainer.classList.remove('hidden');
+        signUpContainer.classList.add('hidden');
+        userProfileContainer.classList.add('hidden');
+    }
+});
+
+// تسجيل الدخول بالإيميل والباسوورد
+signInForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('signInEmail').value.trim();
+    const password = document.getElementById('signInPassword').value.trim();
+
+    if (!email || !password) {
+        alert('متبدأش أي حاجة إلا لما تكتب الجيميل والباسوورد الأول!');
+        return;
+    }
+
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        authModal.classList.add('hidden');
+        signInForm.reset();
+    } catch (error) {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            alert('لا يوجد حساب بهذا الاسم/الجيميل');
+        } else if (error.code === 'auth/wrong-password') {
+            alert('هناك مشكلة في كلمة المرور!');
+        } else {
+            alert('حدث خطأ أثناء تسجيل الدخول: ' + error.message);
+        }
+    }
+});
+
+// إنشاء حساب جديد
+signUpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('signUpName').value.trim();
+    const email = document.getElementById('signUpEmail').value.trim();
+    const password = document.getElementById('signUpPassword').value.trim();
+
+    if (!name || !email || !password) {
+        alert('يرجى ملء جميع البيانات لإنشاء الحساب!');
+        return;
+    }
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await updateProfile(user, { displayName: name });
+        await set(ref(db, `users/${user.uid}`), {
+            name: name,
+            email: email,
+            createdAt: Date.now()
+        });
+
+        authModal.classList.add('hidden');
+        signUpForm.reset();
+    } catch (error) {
+        alert('خطأ في إنشاء الحساب: ' + error.message);
+    }
+});
+
+// تسجيل الدخول بجوجل
+googleSignInBtn.addEventListener('click', async () => {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        
+        await update(ref(db, `users/${user.uid}`), {
+            name: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL || ''
+        });
+
+        authModal.classList.add('hidden');
+    } catch (error) {
+        alert('تعذر تسجيل الدخول بـ Google: ' + error.message);
+    }
+});
+
+facebookSignInBtn.addEventListener('click', () => {
+    alert('تسجيل الدخول بـ Facebook يتطلب تفعيل التطبيق الرسمى. يمكنك استخدام Google أو البريد الإلكتروني حالياً.');
+});
+
+signOutBtn.addEventListener('click', () => {
+    signOut(auth);
+});
+
+// رفع صورة البروفايل
+avatarFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file || !currentUser) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+        const base64Image = event.target.result;
+
+        // حفظ الصورة في Realtime Database و Auth Profile
+        await updateProfile(currentUser, { photoURL: base64Image });
+        await update(ref(db, `users/${currentUser.uid}`), { photoURL: base64Image });
+
+        headerUserAvatar.style.backgroundImage = `url('${base64Image}')`;
+        headerUserAvatar.textContent = '';
+        modalUserAvatar.style.backgroundImage = `url('${base64Image}')`;
+        modalUserAvatar.textContent = '';
+
+        alert('تم تحديث صورة البروفايل بنجاح! 🎉');
+    };
+    reader.readAsDataURL(file);
+});
+
+/* ================= CLOUD DATA SYNC ================= */
+async function syncUserDataFromCloud() {
+    if (!myUserId) return;
+
+    // 1. مزامنة العادات
+    onValue(ref(db, `userData/${myUserId}/habits`), (snapshot) => {
+        const data = snapshot.val();
+        habits = data ? Object.values(data) : [];
+        localStorage.setItem('salta3_habits', JSON.stringify(habits));
+        renderHabits();
+    });
+
+    // 2. مزامنة الملخصات
+    onValue(ref(db, `userData/${myUserId}/summaries`), (snapshot) => {
+        const data = snapshot.val();
+        summaries = data ? Object.values(data) : [];
+        localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+        renderSummaries();
+    });
+
+    // 3. مزامنة المجموعات المنضم إليها
+    onValue(ref(db, `userData/${myUserId}/groups`), (snapshot) => {
+        const data = snapshot.val();
+        myJoinedGroupCodes = data ? Object.values(data) : [];
+        localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
+        renderGroups();
+    });
+}
+
+function pushUserDataToCloud(key, data) {
+    if (myUserId) {
+        set(ref(db, `userData/${myUserId}/${key}`), data);
+    }
+}
 
 /* ================= TIMER SCRIPT ================= */
 const timerElement = document.getElementById("timer");
@@ -338,6 +603,12 @@ function saveHistory() {
     localStorage.setItem("salta3_history", JSON.stringify(sessionHistory));
     localStorage.setItem("salta3_completed", completed);
     localStorage.setItem("salta3_totalMinutes", totalStudyMinutes);
+
+    pushUserDataToCloud("history", {
+        history: sessionHistory,
+        completed: completed,
+        totalMinutes: totalStudyMinutes
+    });
 }
 
 function loadHistory() {
@@ -587,6 +858,7 @@ saveSummaryBtn.addEventListener('click', () => {
 
     summaries.unshift(newSummary);
     localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+    pushUserDataToCloud('summaries', summaries);
     renderSummaries();
 
     document.getElementById('sumTitle').value = '';
@@ -649,6 +921,7 @@ function deleteSummary(id) {
     if (confirm(currentLanguage === 'ar' ? 'هل أنت تأكد من مسح هذا الملخص؟' : 'Are you sure you want to delete this summary?')) {
         summaries = summaries.filter(s => s.id !== id);
         localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+        pushUserDataToCloud('summaries', summaries);
         renderSummaries();
     }
 }
@@ -659,12 +932,10 @@ function rateSummary(id) {
         summary.ratingsCount++;
         summary.rating = Math.min(5, summary.rating + 0.1);
         localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
+        pushUserDataToCloud('summaries', summaries);
         renderSummaries();
     }
 }
-
-window.rateSummary = rateSummary;
-window.deleteSummary = deleteSummary;
 
 /* ================= HABITS MODULE ================= */
 let habits = JSON.parse(localStorage.getItem('salta3_habits') || '[]');
@@ -678,6 +949,7 @@ addHabitBtn.addEventListener('click', () => {
     if (!name) return;
     habits.push({ id: Date.now(), name, done: false });
     localStorage.setItem('salta3_habits', JSON.stringify(habits));
+    pushUserDataToCloud('habits', habits);
     habitInput.value = '';
     renderHabits();
 });
@@ -722,6 +994,7 @@ function toggleHabit(id) {
     if (h) {
         h.done = !h.done;
         localStorage.setItem('salta3_habits', JSON.stringify(habits));
+        pushUserDataToCloud('habits', habits);
         renderHabits();
     }
 }
@@ -729,13 +1002,11 @@ function toggleHabit(id) {
 function deleteHabit(id) {
     habits = habits.filter(item => item.id !== id);
     localStorage.setItem('salta3_habits', JSON.stringify(habits));
+    pushUserDataToCloud('habits', habits);
     renderHabits();
 }
 
-window.toggleHabit = toggleHabit;
-window.deleteHabit = deleteHabit;
-
-/* ================= PRIVATE GROUPS MODULE (FIREBASE REALTIME INTEGRATION) ================= */
+/* ================= PRIVATE GROUPS MODULE ================= */
 let myJoinedGroupCodes = JSON.parse(localStorage.getItem('salta3_joined_codes') || '[]');
 let activeGroupCode = null;
 let currentGroupData = null;
@@ -762,7 +1033,6 @@ const chatMutedNotice = document.getElementById('chatMutedNotice');
 openCreateGroupBtn.addEventListener('click', () => createGroupCard.classList.remove('hidden'));
 cancelCreateGroupBtn.addEventListener('click', () => createGroupCard.classList.add('hidden'));
 
-// الحصول على اسم المستخدم عند أول مشاركة في الدردشة
 function getUserName() {
     if (!currentUserName) {
         currentUserName = prompt(currentLanguage === 'ar' ? 'أدخل اسمك للظهور في الدردشة:' : 'Enter your name for the chat:') || 'طالب';
@@ -771,7 +1041,6 @@ function getUserName() {
     return currentUserName;
 }
 
-// إنشاء مجموعة جديدة في Firebase وتحديد الأدمن
 saveCreateGroupBtn.addEventListener('click', async () => {
     const name = document.getElementById('newGroupName').value.trim();
     if (!name) return;
@@ -799,6 +1068,7 @@ saveCreateGroupBtn.addEventListener('click', async () => {
     if (!myJoinedGroupCodes.includes(code)) {
         myJoinedGroupCodes.push(code);
         localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
+        pushUserDataToCloud('groups', myJoinedGroupCodes);
     }
 
     document.getElementById('newGroupName').value = '';
@@ -807,7 +1077,6 @@ saveCreateGroupBtn.addEventListener('click', async () => {
     selectGroup(code);
 });
 
-// الانضمام لمجموعة عبر الرمز من Firebase
 joinGroupBtn.addEventListener('click', async () => {
     const code = joinCodeInput.value.trim().toUpperCase();
     if (!code) return;
@@ -819,6 +1088,7 @@ joinGroupBtn.addEventListener('click', async () => {
         if (!myJoinedGroupCodes.includes(code)) {
             myJoinedGroupCodes.push(code);
             localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
+            pushUserDataToCloud('groups', myJoinedGroupCodes);
         }
         joinCodeInput.value = '';
         renderGroups();
@@ -871,7 +1141,6 @@ function selectGroup(code) {
         chatGroupName.textContent = g.name;
         chatGroupCode.textContent = `رمز الانضمام: ${g.code}`;
 
-        // فحص ما إذا كان المستخدم الحالي هو أدمن المجموعة
         const isAdmin = (g.createdBy === myUserId);
         if (isAdmin) {
             adminMuteBtn.classList.remove('hidden');
@@ -880,7 +1149,6 @@ function selectGroup(code) {
             adminMuteBtn.classList.add('hidden');
         }
 
-        // حالة الكتم للأعضاء
         if (g.isMuted) {
             chatInput.disabled = true;
             sendChatBtn.disabled = true;
@@ -897,13 +1165,13 @@ function selectGroup(code) {
     });
 }
 
-// مغادرة ومسح المجموعة من قائمة المستخدم فقط
 leaveGroupBtn.addEventListener('click', () => {
     if (!activeGroupCode) return;
     if (confirm(currentLanguage === 'ar' ? 'هل أنت تأكد من مغادرة ومسح هذه المجموعة من قائمتك؟' : 'Are you sure you want to leave and remove this group from your list?')) {
         myJoinedGroupCodes = myJoinedGroupCodes.filter(c => c !== activeGroupCode);
         localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
-        
+        pushUserDataToCloud('groups', myJoinedGroupCodes);
+
         activeGroupCode = null;
         currentGroupData = null;
         
@@ -914,7 +1182,6 @@ leaveGroupBtn.addEventListener('click', () => {
     }
 });
 
-// زر الميوت الخاص بالأدمن
 adminMuteBtn.addEventListener('click', async () => {
     if (!activeGroupCode || !currentGroupData) return;
     const isCurrentlyMuted = currentGroupData.isMuted || false;
@@ -943,7 +1210,6 @@ function renderMessages(messagesObj) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// إرسال رسالة مباشرة إلى Firebase
 sendChatBtn.addEventListener('click', () => {
     if (currentGroupData && currentGroupData.isMuted) return;
     const text = chatInput.value.trim();

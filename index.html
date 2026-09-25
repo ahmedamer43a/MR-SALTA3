@@ -6,7 +6,6 @@
     <meta name="keywords" content="Mr Salta3, Pomodoro timer, study timer, تايمر مذاكرة, مستر سلطع">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MR SALTA3 - Study Hub & Pomodoro Timer">
     <link rel="icon" type="image/png" href="img/favicon.png" />
     <meta property="og:site_name" content="MR SALTA3" />
     <meta property="og:title" content="MR SALTA3 - Study Timer" />
@@ -25,7 +24,7 @@
         <div class="bubble bubble-5"></div>
     </div>
 
-    <!-- Global Zen Mode Exit Button (Fixed at Bottom-Left for all pages) -->
+    <!-- Global Zen Mode Exit Button -->
     <button id="exitZenBtn" class="hidden fixed bottom-4 left-4 bg-coral text-white font-bold px-4 py-2.5 rounded-full z-50 text-sm shadow-2xl hover:bg-coral-dark transition flex items-center gap-2 border-2 border-white">
         ✕ الخروج من وضع التركيز
     </button>
@@ -38,6 +37,14 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <!-- User Profile / Auth Button -->
+                <div id="authHeaderContainer">
+                    <button id="openAuthModalBtn" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-sm font-bold border border-white/30 transition">
+                        <div id="headerUserAvatar" class="w-7 h-7 rounded-full bg-sand/80 text-ocean-dark flex items-center justify-center font-black overflow-hidden bg-cover bg-center">👤</div>
+                        <span id="headerUserName">Sign In</span>
+                    </button>
+                </div>
+
                 <button id="themeToggleBtn" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-lg flex items-center justify-center transition" title="Toggle Theme">🌙</button>
                 <button id="zenModeBtn" class="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-lg flex items-center justify-center transition" title="Zen Mode">🖥️</button>
                 <div class="language-switch flex gap-1 p-1 rounded-full bg-white/20 backdrop-blur-md">
@@ -347,6 +354,101 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- ================= AUTH & PROFILE MODAL ================= -->
+    <div id="authModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-white/20 relative transform transition-all">
+            <button id="closeAuthModalBtn" class="absolute top-4 left-4 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold">✕</button>
+
+            <!-- SIGN IN FORM -->
+            <div id="signInContainer">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-black text-ocean-dark dark:text-ocean-light">MR SALTA3</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">تسجيل الدخول إلى حسابك</p>
+                </div>
+                <form id="signInForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">البريد الإلكتروني / الجيميل</label>
+                        <input id="signInEmail" type="email" placeholder="example@gmail.com" class="w-full h-11 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm font-semibold outline-none focus:border-ocean">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">كلمة المرور</label>
+                        <div class="relative">
+                            <input id="signInPassword" type="password" placeholder="••••••••" class="w-full h-11 pl-10 pr-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm font-semibold outline-none focus:border-ocean">
+                            <button type="button" id="toggleSignInPassword" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm focus:outline-none">👁️</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-ocean text-white font-extrabold text-sm rounded-xl hover:bg-ocean-dark transition">تسجيل الدخول</button>
+                </form>
+
+                <div class="text-center my-4">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Don't have an account? <button id="goToSignUpBtn" class="text-ocean font-bold underline">Create one</button></span>
+                </div>
+
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200 dark:border-gray-700"></div></div>
+                    <div class="relative flex justify-center text-xs"><span class="bg-white dark:bg-gray-900 px-2 text-gray-400">أو عبر</span></div>
+                </div>
+
+                <div class="flex justify-center gap-3">
+                    <button id="googleSignInBtn" class="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 text-xs font-bold rounded-xl flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-700 transition">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg> Google
+                    </button>
+                    <button id="facebookSignInBtn" class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> Facebook
+                    </button>
+                </div>
+            </div>
+
+            <!-- CREATE ACCOUNT FORM -->
+            <div id="signUpContainer" class="hidden">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-black text-ocean-dark dark:text-ocean-light">حساب جديد</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">أنشئ حسابك لمزامنة تقدمك ورسائلك</p>
+                </div>
+                <form id="signUpForm" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">الاسم الكامل</label>
+                        <input id="signUpName" type="text" placeholder="أكتب اسمك" class="w-full h-10 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm font-semibold outline-none focus:border-ocean">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">البريد الإلكتروني / الجيميل</label>
+                        <input id="signUpEmail" type="email" placeholder="example@gmail.com" class="w-full h-10 px-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm font-semibold outline-none focus:border-ocean">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">كلمة المرور</label>
+                        <div class="relative">
+                            <input id="signUpPassword" type="password" placeholder="••••••••" class="w-full h-10 pl-10 pr-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-sm font-semibold outline-none focus:border-ocean">
+                            <button type="button" id="toggleSignUpPassword" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm focus:outline-none">👁️</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-coral text-white font-extrabold text-sm rounded-xl hover:bg-coral-dark transition">إنشاء الحساب</button>
+                </form>
+
+                <div class="text-center my-4">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Already have an account? <button id="goToSignInBtn" class="text-ocean font-bold underline">Sign in</button></span>
+                </div>
+            </div>
+
+            <!-- LOGGED IN USER PROFILE DISPLAY -->
+            <div id="userProfileContainer" class="hidden text-center space-y-4">
+                <div class="relative w-24 h-24 mx-auto">
+                    <div id="modalUserAvatar" class="w-24 h-24 rounded-full bg-sand text-ocean-dark flex items-center justify-center font-black text-3xl border-4 border-ocean overflow-hidden bg-cover bg-center shadow-inner">👤</div>
+                    <label for="avatarFileInput" class="absolute bottom-0 right-0 w-8 h-8 bg-ocean text-white rounded-full flex items-center justify-center text-xs shadow-lg cursor-pointer hover:bg-ocean-dark transition" title="تغيير صورة البروفايل">📷</label>
+                    <input id="avatarFileInput" type="file" accept="image/*" class="hidden">
+                </div>
+                <div>
+                    <h3 id="modalUserName" class="text-xl font-bold text-ocean-dark dark:text-white"></h3>
+                    <p id="modalUserEmail" class="text-xs text-gray-500 dark:text-gray-400 font-mono"></p>
+                </div>
+                <div class="p-3 bg-slate-100 dark:bg-gray-800 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300">
+                    🟢 متصل الآن - تتم مزامنة بياناتك تلقائياً على السحابة!
+                </div>
+                <button id="signOutBtn" class="w-full py-2.5 bg-coral text-white font-bold text-xs rounded-xl hover:bg-coral-dark transition">تسجيل الخروج</button>
+            </div>
+
+        </div>
     </div>
 
     <!-- Sound Effect Audio File -->
