@@ -10,6 +10,12 @@ import {
     signInWithPopup,
     updateProfile
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { 
+    getStorage, 
+    ref as storageRef, 
+    uploadBytes, 
+    getDownloadURL 
+} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
 
 // إعدادات Firebase الخاصة بالمشروع
 const firebaseConfig = {
@@ -26,6 +32,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 // اسم المستخدم للشات ومعرّف الفريد للجهاز/المستخدم
@@ -321,27 +328,41 @@ signOutBtn.addEventListener('click', () => {
     signOut(auth);
 });
 
-// رفع صورة البروفايل
-avatarFileInput.addEventListener('change', (e) => {
+// رفع صورة البروفايل عبر Firebase Storage تلقائياً
+avatarFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file || !currentUser) return;
 
-    const reader = new FileReader();
-    reader.onload = async function(event) {
-        const base64Image = event.target.result;
+    try {
+        // تغيير شكل الزر أو التنبيه لحين رفع الصورة
+        const originalText = modalUserName.textContent;
+        modalUserName.textContent = "جاري رفع الصورة...";
 
-        // حفظ الصورة في Realtime Database و Auth Profile
-        await updateProfile(currentUser, { photoURL: base64Image });
-        await update(ref(db, `users/${currentUser.uid}`), { photoURL: base64Image });
+        // 1. تحديد مكان الملف داخل Firebase Storage
+        const imgRef = storageRef(storage, `avatars/${currentUser.uid}`);
 
-        headerUserAvatar.style.backgroundImage = `url('${base64Image}')`;
+        // 2. رفع الملف إلى Storage
+        await uploadBytes(imgRef, file);
+
+        // 3. الحصول على رابط الصورة المباشر القصير
+        const photoURL = await getDownloadURL(imgRef);
+
+        // 4. تحديث البروفايل وقاعدة البيانات
+        await updateProfile(currentUser, { photoURL });
+        await update(ref(db, `users/${currentUser.uid}`), { photoURL });
+
+        // 5. تحديث الشاشة
+        headerUserAvatar.style.backgroundImage = `url('${photoURL}')`;
         headerUserAvatar.textContent = '';
-        modalUserAvatar.style.backgroundImage = `url('${base64Image}')`;
+        modalUserAvatar.style.backgroundImage = `url('${photoURL}')`;
         modalUserAvatar.textContent = '';
+        modalUserName.textContent = originalText;
 
         alert('تم تحديث صورة البروفايل بنجاح! 🎉');
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+        console.error("خطأ أثناء رفع الصورة:", error);
+        alert('حدث خطأ أثناء رفع الصورة: ' + error.message);
+    }
 });
 
 /* ================= CLOUD DATA SYNC ================= */
