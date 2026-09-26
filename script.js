@@ -10,12 +10,6 @@ import {
     signInWithPopup,
     updateProfile
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-import { 
-    getStorage, 
-    ref as storageRef, 
-    uploadBytes, 
-    getDownloadURL 
-} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
 
 // إعدادات Firebase الخاصة بالمشروع
 const firebaseConfig = {
@@ -32,7 +26,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 // اسم المستخدم للشات ومعرّف الفريد للجهاز/المستخدم
@@ -156,7 +149,6 @@ const headerUserAvatar = document.getElementById('headerUserAvatar');
 const modalUserName = document.getElementById('modalUserName');
 const modalUserEmail = document.getElementById('modalUserEmail');
 const modalUserAvatar = document.getElementById('modalUserAvatar');
-const avatarFileInput = document.getElementById('avatarFileInput');
 
 // زر إظهار/إخفاء كلمة المرور
 const toggleSignInPassword = document.getElementById('toggleSignInPassword');
@@ -209,24 +201,16 @@ onAuthStateChanged(auth, async (user) => {
         currentUserName = user.displayName || userData.name || user.email.split('@')[0];
         localStorage.setItem('salta3_username', currentUserName);
 
-        const photoURL = user.photoURL || userData.photoURL || '';
-
-        // تحديث الهيدر والـ Popup
+        // تحديث الهيدر والـ Popup باستخدام الحرف الأول من اسم المستخدم
+        const initial = currentUserName.charAt(0).toUpperCase();
         headerUserName.textContent = currentUserName;
         modalUserName.textContent = currentUserName;
         modalUserEmail.textContent = user.email;
 
-        if (photoURL) {
-            headerUserAvatar.style.backgroundImage = `url('${photoURL}')`;
-            headerUserAvatar.textContent = '';
-            modalUserAvatar.style.backgroundImage = `url('${photoURL}')`;
-            modalUserAvatar.textContent = '';
-        } else {
-            headerUserAvatar.style.backgroundImage = '';
-            headerUserAvatar.textContent = currentUserName.charAt(0).toUpperCase();
-            modalUserAvatar.style.backgroundImage = '';
-            modalUserAvatar.textContent = currentUserName.charAt(0).toUpperCase();
-        }
+        headerUserAvatar.style.backgroundImage = '';
+        headerUserAvatar.textContent = initial;
+        modalUserAvatar.style.backgroundImage = '';
+        modalUserAvatar.textContent = initial;
 
         signInContainer.classList.add('hidden');
         signUpContainer.classList.add('hidden');
@@ -310,8 +294,7 @@ googleSignInBtn.addEventListener('click', async () => {
         
         await update(ref(db, `users/${user.uid}`), {
             name: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL || ''
+            email: user.email
         });
 
         authModal.classList.add('hidden');
@@ -326,43 +309,6 @@ facebookSignInBtn.addEventListener('click', () => {
 
 signOutBtn.addEventListener('click', () => {
     signOut(auth);
-});
-
-// رفع صورة البروفايل عبر Firebase Storage تلقائياً
-avatarFileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file || !currentUser) return;
-
-    try {
-        // تغيير شكل الزر أو التنبيه لحين رفع الصورة
-        const originalText = modalUserName.textContent;
-        modalUserName.textContent = "جاري رفع الصورة...";
-
-        // 1. تحديد مكان الملف داخل Firebase Storage
-        const imgRef = storageRef(storage, `avatars/${currentUser.uid}`);
-
-        // 2. رفع الملف إلى Storage
-        await uploadBytes(imgRef, file);
-
-        // 3. الحصول على رابط الصورة المباشر القصير
-        const photoURL = await getDownloadURL(imgRef);
-
-        // 4. تحديث البروفايل وقاعدة البيانات
-        await updateProfile(currentUser, { photoURL });
-        await update(ref(db, `users/${currentUser.uid}`), { photoURL });
-
-        // 5. تحديث الشاشة
-        headerUserAvatar.style.backgroundImage = `url('${photoURL}')`;
-        headerUserAvatar.textContent = '';
-        modalUserAvatar.style.backgroundImage = `url('${photoURL}')`;
-        modalUserAvatar.textContent = '';
-        modalUserName.textContent = originalText;
-
-        alert('تم تحديث صورة البروفايل بنجاح! 🎉');
-    } catch (error) {
-        console.error("خطأ أثناء رفع الصورة:", error);
-        alert('حدث خطأ أثناء رفع الصورة: ' + error.message);
-    }
 });
 
 /* ================= CLOUD DATA SYNC ================= */
