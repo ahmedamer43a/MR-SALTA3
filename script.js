@@ -1,14 +1,15 @@
 /* === إعدادات Firebase المدمجة للمنتجات والشات (Online Realtime) === */
-const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDummyKeyForSouqnaChat998877",
-    authDomain: "souqna-store-chat.firebaseapp.com",
-    databaseURL: "https://souqna-store-chat-default-rtdb.firebaseio.com",
-    projectId: "souqna-store-chat",
-    storageBucket: "souqna-store-chat.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef123456789"
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAdw_Y0GNqHkjnyIgEhRNUQxN55d7UPOJE",
+  authDomain: "souqnachatapp.firebaseapp.com",
+  databaseURL: "https://souqnachatapp-default-rtdb.firebaseio.com",
+  projectId: "souqnachatapp",
+  storageBucket: "souqnachatapp.firebasestorage.app",
+  messagingSenderId: "625760163639",
+  appId: "1:625760163639:web:be5ab0f15544bd2c076cb2",
+  measurementId: "G-FBE3SD6LG9"
 };
-
 // تهيئة Firebase
 if (!firebase.apps.length) {
     firebase.initializeApp(FIREBASE_CONFIG);
