@@ -1,274 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
-
-* {
-    font-family: 'Tajawal', sans-serif;
-    box-sizing: border-box;
-}
-
-:root {
-    --ocean-dark: #063b45;
-    --ocean: #087f8c;
-    --ocean-light: #38b8c0;
-    --coral: #ed6659;
-    --coral-dark: #a9443d;
-    --sand: #f4d49c;
-    --card-bg: rgba(255, 255, 255, 0.92);
-    --row-bg: #edf9f8;
-    --border-color: #d4e9e8;
-    --text-color: #12383e;
-    --bg-gradient: linear-gradient(180deg, #70dce1 0%, #209ba5 45%, #064f5b 100%);
-}
-
-.dark {
-    --ocean-dark: #91e5ee;
-    --ocean: #42c3d1;
-    --ocean-light: #2da1ae;
-    --card-bg: rgba(10, 35, 42, 0.92);
-    --row-bg: #0e333a;
-    --border-color: #174c56;
-    --text-color: #e0f7f6;
-    --bg-gradient: linear-gradient(180deg, #071f25 0%, #08323a 50%, #031115 100%);
-}
-
 body {
-    background: var(--bg-gradient);
-    color: var(--text-color);
-    min-height: 100vh;
-    transition: background 0.4s ease, color 0.4s ease;
+    font-family: 'Cairo', sans-serif;
 }
 
-/* Ocean Background Effects */
-.ocean-background {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 0;
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-.ocean-background::before {
-    content: "";
-    position: absolute;
-    width: 160%;
-    height: 250px;
-    left: -30%;
-    bottom: -130px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 50%;
-    animation: oceanWave 7s ease-in-out infinite;
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 
-@keyframes oceanWave {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(-60px); }
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
 }
 
-.bubble {
-    position: absolute;
-    bottom: -40px;
-    border: 2px solid rgba(255, 255, 255, 0.45);
-    border-radius: 50%;
-    animation: bubbleUp linear infinite;
-}
-.bubble-1 { left: 10%; width: 15px; height: 15px; animation-duration: 8s; }
-.bubble-2 { left: 28%; width: 9px; height: 9px; animation-duration: 11s; }
-.bubble-3 { left: 55%; width: 20px; height: 20px; animation-duration: 9s; }
-.bubble-4 { left: 75%; width: 12px; height: 12px; animation-duration: 13s; }
-.bubble-5 { left: 90%; width: 18px; height: 18px; animation-duration: 10s; }
-
-@keyframes bubbleUp {
-    from { transform: translateY(0); opacity: 0; }
-    15% { opacity: 1; }
-    to { transform: translateY(-110vh); opacity: 0; }
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
 }
 
-/* Crab Character Styles */
-.character-area {
-    height: 190px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* تأثيرات حركية وفقاعات للزر العائم */
+@keyframes floatBubble {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-6px) scale(1.03); }
 }
 
-.crab {
-    width: 180px;
-    height: 150px;
-    position: relative;
-    animation: crabFloat 2.5s ease-in-out infinite;
-    transition: transform 0.3s ease;
+.support-bubble-btn {
+    animation: floatBubble 3s ease-in-out infinite;
 }
-
-@keyframes crabFloat {
-    0%, 100% { transform: translateY(0) rotate(-1deg); }
-    50% { transform: translateY(-8px) rotate(1deg); }
-}
-
-.crab-body {
-    position: absolute;
-    width: 110px;
-    height: 85px;
-    left: 35px;
-    top: 45px;
-    background: var(--coral);
-    border: 5px solid var(--coral-dark);
-    border-radius: 50%;
-}
-
-.eye {
-    position: absolute;
-    width: 32px;
-    height: 40px;
-    top: 15px;
-    background: white;
-    border: 4px solid var(--coral-dark);
-    border-radius: 50%;
-    z-index: 5;
-    transition: all 0.3s;
-}
-.eye-left { left: 52px; }
-.eye-right { right: 52px; }
-
-.pupil {
-    width: 12px;
-    height: 17px;
-    background: #173e43;
-    border-radius: 50%;
-    margin: 10px auto;
-    transition: all 0.3s;
-}
-
-.claw {
-    position: absolute;
-    width: 45px;
-    height: 36px;
-    top: 65px;
-    background: var(--coral);
-    border: 5px solid var(--coral-dark);
-    border-radius: 50%;
-    transition: transform 0.3s ease;
-}
-.claw-left { left: 0; transform: rotate(-20deg); }
-.claw-right { right: 0; transform: rotate(20deg); }
-
-.leg {
-    position: absolute;
-    width: 48px;
-    height: 11px;
-    bottom: 17px;
-    background: var(--coral-dark);
-    border-radius: 20px;
-}
-.leg-1 { left: 30px; transform: rotate(20deg); }
-.leg-2 { left: 55px; transform: rotate(10deg); }
-.leg-3 { right: 30px; transform: rotate(-20deg); }
-.leg-4 { right: 55px; transform: rotate(-10deg); }
-
-.mouth {
-    position: absolute;
-    width: 24px;
-    height: 10px;
-    border-bottom: 3px solid var(--coral-dark);
-    border-radius: 0 0 12px 12px;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.sunglasses, .zzz { display: none; }
-
-/* Crab States */
-.crab.state-study .pupil { transform: scale(0.8); }
-.crab.state-short .sunglasses {
-    display: block;
-    position: absolute;
-    width: 80px;
-    height: 24px;
-    background: #111;
-    top: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    border-radius: 6px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
-.crab.state-short .claw-left { transform: rotate(30deg) translateY(-10px); }
-.crab.state-short .claw-right { transform: rotate(-30deg) translateY(-10px); }
-
-.crab.state-long .eye { height: 10px; top: 30px; }
-.crab.state-long .pupil { display: none; }
-.crab.state-long .zzz {
-    display: block;
-    position: absolute;
-    top: -15px;
-    right: 20px;
-    font-weight: bold;
-    color: var(--ocean-dark);
-    font-size: 16px;
-    animation: sleepZzz 2s infinite;
-}
-
-@keyframes sleepZzz {
-    0% { opacity: 0; transform: translateY(0); }
-    50% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-15px); }
-}
-
-.crab.state-paused .pupil { transform: translateX(-3px); }
-.crab.state-paused .claw-left { transform: rotate(-50deg); }
-
-.crab.celebrate { animation: celebrate 0.55s ease-in-out 4; }
-@keyframes celebrate {
-    0%, 100% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(9deg) scale(1.1); }
-}
-
-/* Zen Mode Styling Across All Pages */
-body.zen-mode #mainHeader,
-body.zen-mode #navigationTabs,
-body.zen-mode #settingsCard {
-    display: none !important;
-}
-
-body.zen-mode #timerGrid {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    min-height: 80vh !important;
-}
-
-body.zen-mode #timerCard {
-    width: 100% !important;
-    max-width: 550px !important;
-    margin: 0 auto !important;
-}
-
-/* Switch Custom styling */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 52px;
-    height: 29px;
-    flex-shrink: 0;
-}
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-    position: absolute;
-    inset: 0;
-    cursor: pointer;
-    background: #b8cccc;
-    border-radius: 30px;
-    transition: 0.25s;
-}
-.slider::before {
-    content: "";
-    position: absolute;
-    width: 21px;
-    height: 21px;
-    left: 4px;
-    top: 4px;
-    background: white;
-    border-radius: 50%;
-    transition: 0.25s;
-}
-.switch input:checked + .slider { background: #087f8c; }
-.switch input:checked + .slider::before { transform: translateX(23px); }

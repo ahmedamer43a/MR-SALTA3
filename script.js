@@ -1,1263 +1,722 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, set, get, child, update } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
-import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged,
-    GoogleAuthProvider,
-    signInWithPopup,
-    updateProfile
-} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
-
-// إعدادات Firebase الخاصة بالمشروع
-const firebaseConfig = {
-    apiKey: "AIzaSyBQJd93k9OyQIBzJejjddMLSpWvyj2kXw8",
-    authDomain: "mr-salta3.firebaseapp.com",
-    databaseURL: "https://mr-salta3-default-rtdb.firebaseio.com",
-    projectId: "mr-salta3",
-    storageBucket: "mr-salta3.firebasestorage.app",
-    messagingSenderId: "183894514268",
-    appId: "1:183894514268:web:bf5c69625bd79f2302a499",
-    measurementId: "G-53G69D4B37"
+/* === إعدادات Firebase المدمجة للمنتجات والشات (Online Realtime) === */
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDummyKeyForSouqnaChat998877",
+    authDomain: "souqna-store-chat.firebaseapp.com",
+    databaseURL: "https://souqna-store-chat-default-rtdb.firebaseio.com",
+    projectId: "souqna-store-chat",
+    storageBucket: "souqna-store-chat.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdef123456789"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-
-// اسم المستخدم للشات ومعرّف الفريد للجهاز/المستخدم
-let currentUser = null;
-let currentUserName = localStorage.getItem('salta3_username') || '';
-let myUserId = localStorage.getItem('salta3_userid');
-if (!myUserId) {
-    myUserId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-    localStorage.setItem('salta3_userid', myUserId);
+// تهيئة Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
 }
+const dbRef = firebase.database();
 
-tailwind.config = {
-    darkMode: 'class',
-    theme: {
-        extend: {
-            colors: {
-                ocean: {
-                    dark: '#063b45',
-                    DEFAULT: '#087f8c',
-                    light: '#38b8c0',
-                    bg: '#eaf8f7'
-                },
-                coral: {
-                    DEFAULT: '#ed6659',
-                    dark: '#a9443d'
-                },
-                sand: '#f4d49c'
-            }
-        }
+/* === إعدادات خدمة العملاء عبر EmailJS === */
+const EMAILJS_SERVICE_ID = "service_qa0q2wm";
+const EMAILJS_TEMPLATE_ID = "template_sc7urvf";
+const EMAILJS_PUBLIC_KEY = "5iANM1rMJkKELMYmC";
+
+(function(){
+    if (typeof emailjs !== 'undefined') {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
     }
-};
+})();
 
-/* ================= TRANSLATIONS ================= */
-const i18n = {
+const translations = {
     ar: {
-        navTimer: "التايمر", navSummaries: "الملخصات", navHabits: "متتبع العادات", navGroups: "المجموعات الخاصة", navContact: "تواصل معنا",
-        summariesTitle: "مكتبة الملخصات والملاحظات", addSummaryBtn: "إضافة ملخص جديد", newSummaryHeader: "نشر ملخص دراسي",
-        attachFile: "مرفق ملف (اختياري - PDF/صورة):", cancel: "إلغاء", publish: "نشر الملخص", habitsTitle: "متتبع العادات الدراسية",
-        addHabit: "إضافة عادة", groupsTitle: "المجموعات الخاصة", joinCodeLabel: "الانضمام بكود المجموعات:", join: "انضمام",
-        createGroupBtn: "+ إنشاء مجموعة دراسية جديدة", create: "إنشاء", myGroupsHeader: "مجموعاتي:", selectGroupHint: "اختر مجموعة من القائمة أو انضم برمز للبدء في الدردشة",
-        copyInvite: "نسخ رابط الدعوة", send: "إرسال", contactTitle: "تواصل معنا", contactSub: "لديك اقتراح أو واجهتك مشكلة؟ يسعدنا تواصلك مع فريق MR SALTA3",
-        contactName: "الاسم الكامل", contactEmail: "البريد الإلكتروني", contactMessage: "الرسالة", contactSend: "إرسال الرسالة"
+        pageTitle: "سُوقنا - منصة الإعلانات المبوبة والعمولة",
+        brandName: "سُوقـنَا",
+        brandSub: "منصة الإعلانات والعمولة الموثوقة",
+        navHome: "الرئيسية",
+        navCategories: "الأقسام",
+        navAddAd: "أضف إعلانك الآن",
+        btnLogin: "تسجيل الدخول",
+        btnRegister: "حساب جديد",
+        heroBadge: "المنصة الآمنة للبيع والشراء بنظام العمولة",
+        heroTitle: "اعرض منتجك أو ابحث عما تريده بثقة وأمان",
+        heroDesc: "لابتوبات، سيارات، هواتف، عقارات والمزيد.. تواصل مباشرة مع البائع عبر الشات المخصص لكل منتج أو واتساب.",
+        searchPlaceholder: "ابحث عن لابتوب، سيارة، شقة...",
+        catAll: "جميع الأقسام",
+        catLaptops: "لابتوبات وإلكترونيات",
+        catPhones: "هواتف محمولة",
+        catCars: "سيارات ومركبات",
+        catRealEstate: "عقارات وبيوت",
+        btnSearch: "بحث سريع",
+        secCategories: "الأقسام الرئيسية",
+        secLatestAds: "أحدث العروض والمنتجات المضافة أونلاين",
+        backHome: "الرئيسية",
+        condLabel: "الحالة:",
+        descLabel: "وصف المنتج:",
+        verifiedSeller: "عضو موثق في المنصة • تم التحقق من الهوية",
+        whatsappContact: "تواصل واتساب",
+        chatTitle: "شات الشراء الخاص بهذا المنتج",
+        chatPlaceholder: "اكتب رسالتك للمشتري أو البائع...",
+        addProdTitle: "إضافة منتج جديد للبيع",
+        addProdSub: "املأ بيانات المنتج بدقة ليظهر فوراً لكل الناس أونلاين",
+        lblAdTitle: "عنوان الإعلان",
+        phAdTitle: "مثال: لابتوب Apple MacBook Pro بحالة الزيروو",
+        lblCategory: "القسم",
+        lblPrice: "السعر (ج.م أو بالدولار)",
+        lblCondition: "حالة المنتج",
+        condNew: "جديد تماماً (زيروو)",
+        condLikeNew: "استعمال خفيف بحالة الجديد",
+        condGood: "استعمال متوسط بحالة جيدة",
+        lblLocation: "المدينة / المحافظة",
+        lblImages: "صور المنتج (اختر حتى 6 صور)",
+        uploadPrompt: "انقر لاختيار الصور أو اسحبها هنا (بحد أقصى 6 صور)",
+        lblDesc: "وصف تفصيلي للمنتج",
+        phDesc: "اكتب المواصفات والعيوب إن وجدت لضمان المصداقية...",
+        btnCancel: "إلغاء",
+        btnPublish: "نشر الإعلان الآن",
+        dashTitle: "لوحة تحكم البائع وإعلاناته",
+        dashSub: "إدارة إعلاناتك، متابعة الصفقات وحالة المحادثات الخاصة بك.",
+        statMyAds: "إعلاناتي النشطة",
+        statActiveChats: "المحادثات النشطة مع المشترين",
+        statCommission: "العمولة المستحقة للمنصة",
+        myAdsTitle: "إعلاناتي المعروضة",
+        emptyAdsMsg: "لا توجد أي إعلانات معروضة حالياً. كن أول من يضيف منتجاً!",
+        noChatsMsg: "لا توجد رسائل سابقة. ابدأ المحادثة الآن مع البائع بخصوص هذا المنتج!"
     },
     en: {
-        navTimer: "Timer", navSummaries: "Summaries", navHabits: "Habit Tracker", navGroups: "Private Groups", navContact: "Contact Us",
-        summariesTitle: "Summaries & Notes Library", addSummaryBtn: "Add New Summary", newSummaryHeader: "Publish Study Summary",
-        attachFile: "Attach File (Optional - PDF/Image):", cancel: "Cancel", publish: "Publish Summary", habitsTitle: "Study Habit Tracker",
-        addHabit: "Add Habit", groupsTitle: "Private Groups", joinCodeLabel: "Join by Group Code:", join: "Join",
-        createGroupBtn: "+ Create New Study Group", create: "Create", myGroupsHeader: "My Groups:", selectGroupHint: "Select a group or join with a code to start chatting",
-        copyInvite: "Copy Invite Link", send: "Send", contactTitle: "Contact Us", contactSub: "Have a suggestion or an issue? Contact MR SALTA3 team.",
-        contactName: "Full Name", contactEmail: "Email Address", contactMessage: "Message", contactSend: "Send Message"
+        pageTitle: "Souqna - Classified Ads & Commission Platform",
+        brandName: "SOUQNA",
+        brandSub: "Trusted Marketplace & Commission System",
+        navHome: "Home",
+        navCategories: "Categories",
+        navAddAd: "Post Ad Now",
+        btnLogin: "Login",
+        btnRegister: "Register",
+        heroBadge: "Secure Buying & Selling Platform",
+        heroTitle: "List Your Product or Find What You Need Safely",
+        heroDesc: "Laptops, cars, phones, real estate & more. Chat directly with sellers per product or via WhatsApp.",
+        searchPlaceholder: "Search laptops, cars, apartments...",
+        catAll: "All Categories",
+        catLaptops: "Laptops & Electronics",
+        catPhones: "Mobile Phones",
+        catCars: "Cars & Vehicles",
+        catRealEstate: "Real Estate",
+        btnSearch: "Search",
+        secCategories: "Main Categories",
+        secLatestAds: "Latest Online Listed Products",
+        backHome: "Back to Home",
+        condLabel: "Condition:",
+        descLabel: "Product Description:",
+        verifiedSeller: "Verified Member • Identity Confirmed",
+        whatsappContact: "WhatsApp Contact",
+        chatTitle: "Product-Specific Purchase Chat",
+        chatPlaceholder: "Type your message to seller/buyer...",
+        addProdTitle: "Add New Product for Sale",
+        addProdSub: "Fill in product details accurately to list it instantly online",
+        lblAdTitle: "Ad Title",
+        phAdTitle: "e.g., Apple MacBook Pro in pristine condition",
+        lblCategory: "Category",
+        lblPrice: "Price (USD / EGP)",
+        lblCondition: "Condition",
+        condNew: "Brand New (Zero)",
+        condLikeNew: "Lightly Used (Like New)",
+        condGood: "Moderately Used (Good)",
+        lblLocation: "City / Location",
+        lblImages: "Product Images (Select up to 6 images)",
+        uploadPrompt: "Click to select or drag images here (Max 6 images)",
+        lblDesc: "Detailed Description",
+        phDesc: "Write specs and any defects for transparency...",
+        btnCancel: "Cancel",
+        btnPublish: "Publish Ad Now",
+        dashTitle: "Seller Dashboard & Ads",
+        dashSub: "Manage your listings, track deals, and monitor chats.",
+        statMyAds: "My Active Ads",
+        statActiveChats: "Active Chats",
+        statCommission: "Platform Commission",
+        myAdsTitle: "My Listed Products",
+        emptyAdsMsg: "No products listed yet. Be the first to add one!",
+        noChatsMsg: "No messages yet. Start the conversation with the seller!"
     }
 };
 
-const timerTranslations = {
-    en: {
-        study: "STUDY TIME", short: "SHORT BREAK", long: "LONG BREAK",
-        ready: "Set your time and press Start.", studying: "Stay focused — you got this!", break: "Break time. Recharge!",
-        paused: "Timer paused.", waiting: "Waiting for you to start.", settings: "Timer Settings", studyMinutes: "Study Minutes",
-        shortBreak: "Short Break", longBreak: "Long Break", sessions: "Sessions Before Long Break", alarm: "Alarm Repetitions",
-        soundSelectLabel: "Alarm Sound", autoBreak: "Auto Break", autoBreakText: "Start breaks automatically",
-        autoStudy: "Auto Study", autoStudyText: "Start studying automatically", notifTitle: "Browser Notifications",
-        notifText: "Get notified when phase ends", completed: "Sessions Completed", total: "Total Study Time",
-        historyTitle: "Today's Sessions", clearHistory: "Clear", exitZen: "✕ Exit Zen Mode", tip: "Set your times and press Start.",
-        start: "▶ Start", pause: "⏸ Pause", reset: "↻ Reset",
-        notifStudyFinishTitle: "Study Phase Complete! 🎉", notifStudyFinishBody: "Great job! Time for a break.",
-        notifBreakFinishTitle: "Break Finished! 💪", notifBreakFinishBody: "Ready to focus again? Let's go!"
-    },
-    ar: {
-        study: "وقت المذاكرة", short: "البريك القصير", long: "اللونج بريك",
-        ready: "ظبط الوقت واضغط ابدأ.", studying: "ركز يا بطل — أنت قدها!", break: "وقت البريك — ريّح دماغك!",
-        paused: "التايمر متوقف مؤقتًا.", waiting: "مستنيك تبدأ.", settings: "إعدادات التايمر", studyMinutes: "دقائق المذاكرة",
-        shortBreak: "البريك القصير", longBreak: "اللونج بريك", sessions: "عدد السيشنز قبل اللونج بريك", alarm: "عدد مرات الرنة",
-        soundSelectLabel: "صوت التنبيه", autoBreak: "البريك التلقائي", autoBreakText: "ابدأ البريك تلقائيًا",
-        autoStudy: "المذاكرة التلقائية", autoStudyText: "ابدأ المذاكرة تلقائيًا", notifTitle: "إشعارات المتصفح",
-        notifText: "تنبيهك عند انتهاء الوقت", completed: "السيشنز المكتملة", total: "إجمالي وقت المذاكرة",
-        historyTitle: "جلسات اليوم", clearHistory: "مسح", exitZen: "✕ الخروج من وضع التركيز", tip: "ظبط الأوقات واضغط ابدأ.",
-        start: "▶ ابدأ", pause: "⏸ إيقاف", reset: "↻ إعادة ضبط",
-        notifStudyFinishTitle: "عاش يا بطل! خلصت السيشن 🎉", notifStudyFinishBody: "وقت البريك جه، ريّح دماغك شوية.",
-        notifBreakFinishTitle: "البريك خلص! 💪", notifBreakFinishBody: "جاهز نرجع نركز تاني؟ يلا بينا!"
-    }
+let currentLang = localStorage.getItem('souqna_lang') || 'ar';
+let currentTheme = localStorage.getItem('souqna_theme') || 'light';
+
+let products = [];
+let productChats = {};
+let currentUser = JSON.parse(localStorage.getItem('souqna_user')) || null;
+let currentAuthMode = 'login';
+let activeProductId = null;
+let selectedProductImages = [];
+
+window.onload = function() {
+    applyTheme(currentTheme);
+    applyLanguage(currentLang);
+    checkSessionState();
+    initRealtimeDatabaseListeners();
 };
 
-let currentLanguage = "ar";
-
-// Tab Navigation Logic
-document.querySelectorAll('.nav-tab').forEach(tabBtn => {
-    tabBtn.addEventListener('click', () => {
-        document.querySelectorAll('.nav-tab').forEach(b => {
-            b.classList.remove('active', 'bg-white', 'dark:bg-ocean-dark', 'shadow', 'text-ocean-dark', 'dark:text-white');
-            b.classList.add('hover:bg-white/30', 'text-white');
-        });
-        tabBtn.classList.add('active', 'bg-white', 'dark:bg-ocean-dark', 'shadow', 'text-ocean-dark', 'dark:text-white');
-        tabBtn.classList.remove('hover:bg-white/30', 'text-white');
-
-        const targetTab = tabBtn.getAttribute('data-tab');
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-        document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
-    });
-});
-
-/* ================= AUTH & PROFILE MODULE ================= */
-const authModal = document.getElementById('authModal');
-const openAuthModalBtn = document.getElementById('openAuthModalBtn');
-const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
-const signInContainer = document.getElementById('signInContainer');
-const signUpContainer = document.getElementById('signUpContainer');
-const userProfileContainer = document.getElementById('userProfileContainer');
-
-const goToSignUpBtn = document.getElementById('goToSignUpBtn');
-const goToSignInBtn = document.getElementById('goToSignInBtn');
-
-const signInForm = document.getElementById('signInForm');
-const signUpForm = document.getElementById('signUpForm');
-const googleSignInBtn = document.getElementById('googleSignInBtn');
-const facebookSignInBtn = document.getElementById('facebookSignInBtn');
-const signOutBtn = document.getElementById('signOutBtn');
-
-const headerUserName = document.getElementById('headerUserName');
-const headerUserAvatar = document.getElementById('headerUserAvatar');
-const modalUserName = document.getElementById('modalUserName');
-const modalUserEmail = document.getElementById('modalUserEmail');
-const modalUserAvatar = document.getElementById('modalUserAvatar');
-
-// زر إظهار/إخفاء كلمة المرور
-const toggleSignInPassword = document.getElementById('toggleSignInPassword');
-const signInPassword = document.getElementById('signInPassword');
-
-if (toggleSignInPassword && signInPassword) {
-    toggleSignInPassword.addEventListener('click', () => {
-        const type = signInPassword.getAttribute('type') === 'password' ? 'text' : 'password';
-        signInPassword.setAttribute('type', type);
-        toggleSignInPassword.textContent = type === 'password' ? '👁️' : '🙈';
-    });
-}
-
-const toggleSignUpPassword = document.getElementById('toggleSignUpPassword');
-const signUpPassword = document.getElementById('signUpPassword');
-
-if (toggleSignUpPassword && signUpPassword) {
-    toggleSignUpPassword.addEventListener('click', () => {
-        const type = signUpPassword.getAttribute('type') === 'password' ? 'text' : 'password';
-        signUpPassword.setAttribute('type', type);
-        toggleSignUpPassword.textContent = type === 'password' ? '👁️' : '🙈';
-    });
-}
-
-openAuthModalBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
-closeAuthModalBtn.addEventListener('click', () => authModal.classList.add('hidden'));
-
-goToSignUpBtn.addEventListener('click', () => {
-    signInContainer.classList.add('hidden');
-    signUpContainer.classList.remove('hidden');
-});
-
-goToSignInBtn.addEventListener('click', () => {
-    signUpContainer.classList.add('hidden');
-    signInContainer.classList.remove('hidden');
-});
-
-// مراقبة حالة تسجيل الدخول في Firebase
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        myUserId = user.uid;
-        localStorage.setItem('salta3_userid', myUserId);
-        
-        // جلب تفاصيل إضافية للبروفايل من Realtime Database
-        const userRef = ref(db, `users/${user.uid}`);
-        const snapshot = await get(userRef);
-        let userData = snapshot.val() || {};
-
-        currentUserName = user.displayName || userData.name || user.email.split('@')[0];
-        localStorage.setItem('salta3_username', currentUserName);
-
-        // تحديث الهيدر والـ Popup باستخدام الحرف الأول من اسم المستخدم
-        const initial = currentUserName.charAt(0).toUpperCase();
-        headerUserName.textContent = currentUserName;
-        modalUserName.textContent = currentUserName;
-        modalUserEmail.textContent = user.email;
-
-        headerUserAvatar.style.backgroundImage = '';
-        headerUserAvatar.textContent = initial;
-        modalUserAvatar.style.backgroundImage = '';
-        modalUserAvatar.textContent = initial;
-
-        signInContainer.classList.add('hidden');
-        signUpContainer.classList.add('hidden');
-        userProfileContainer.classList.remove('hidden');
-
-        // مزامنة البيانات السحابية مع الحساب الحالي
-        syncUserDataFromCloud();
-    } else {
-        currentUser = null;
-        headerUserName.textContent = 'Sign In';
-        headerUserAvatar.style.backgroundImage = '';
-        headerUserAvatar.textContent = '👤';
-
-        signInContainer.classList.remove('hidden');
-        signUpContainer.classList.add('hidden');
-        userProfileContainer.classList.add('hidden');
-    }
-});
-
-// تسجيل الدخول بالإيميل والباسوورد
-signInForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('signInEmail').value.trim();
-    const password = document.getElementById('signInPassword').value.trim();
-
-    if (!email || !password) {
-        alert('متبدأش أي حاجة إلا لما تكتب الجيميل والباسوورد الأول!');
-        return;
-    }
-
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        authModal.classList.add('hidden');
-        signInForm.reset();
-    } catch (error) {
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            alert('لا يوجد حساب بهذا الاسم/الجيميل');
-        } else if (error.code === 'auth/wrong-password') {
-            alert('هناك مشكلة في كلمة المرور!');
-        } else {
-            alert('حدث خطأ أثناء تسجيل الدخول: ' + error.message);
-        }
-    }
-});
-
-// إنشاء حساب جديد
-signUpForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('signUpName').value.trim();
-    const email = document.getElementById('signUpEmail').value.trim();
-    const password = document.getElementById('signUpPassword').value.trim();
-
-    if (!name || !email || !password) {
-        alert('يرجى ملء جميع البيانات لإنشاء الحساب!');
-        return;
-    }
-
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await updateProfile(user, { displayName: name });
-        await set(ref(db, `users/${user.uid}`), {
-            name: name,
-            email: email,
-            createdAt: Date.now()
-        });
-
-        authModal.classList.add('hidden');
-        signUpForm.reset();
-    } catch (error) {
-        alert('خطأ في إنشاء الحساب: ' + error.message);
-    }
-});
-
-// تسجيل الدخول بجوجل
-googleSignInBtn.addEventListener('click', async () => {
-    try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        
-        await update(ref(db, `users/${user.uid}`), {
-            name: user.displayName,
-            email: user.email
-        });
-
-        authModal.classList.add('hidden');
-    } catch (error) {
-        alert('تعذر تسجيل الدخول بـ Google: ' + error.message);
-    }
-});
-
-facebookSignInBtn.addEventListener('click', () => {
-    alert('تسجيل الدخول بـ Facebook يتطلب تفعيل التطبيق الرسمى. يمكنك استخدام Google أو البريد الإلكتروني حالياً.');
-});
-
-signOutBtn.addEventListener('click', () => {
-    signOut(auth);
-});
-
-/* ================= CLOUD DATA SYNC ================= */
-async function syncUserDataFromCloud() {
-    if (!myUserId) return;
-
-    // 1. مزامنة العادات
-    onValue(ref(db, `userData/${myUserId}/habits`), (snapshot) => {
+// الاستماع للبيانات مباشرة أونلاين من الـ Firebase لتحديث المنتجات لكل الزوار تلقائياً
+function initRealtimeDatabaseListeners() {
+    dbRef.ref('products').on('value', (snapshot) => {
         const data = snapshot.val();
-        habits = data ? Object.values(data) : [];
-        localStorage.setItem('salta3_habits', JSON.stringify(habits));
-        renderHabits();
+        if (data) {
+            products = Object.values(data).reverse(); // أحدث الإعلانات فوق
+        } else {
+            products = [];
+        }
+        renderProducts(products);
+        if (document.getElementById('dashboardView') && !document.getElementById('dashboardView').classList.contains('hidden')) {
+            renderSellerDashboard();
+        }
     });
 
-    // 2. مزامنة الملخصات
-    onValue(ref(db, `userData/${myUserId}/summaries`), (snapshot) => {
+    dbRef.ref('chats').on('value', (snapshot) => {
         const data = snapshot.val();
-        summaries = data ? Object.values(data) : [];
-        localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
-        renderSummaries();
-    });
-
-    // 3. مزامنة المجموعات المنضم إليها
-    onValue(ref(db, `userData/${myUserId}/groups`), (snapshot) => {
-        const data = snapshot.val();
-        myJoinedGroupCodes = data ? Object.values(data) : [];
-        localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
-        renderGroups();
+        if (data) {
+            productChats = data;
+        } else {
+            productChats = {};
+        }
+        if (activeProductId) {
+            renderChatMessages();
+        }
     });
 }
 
-function pushUserDataToCloud(key, data) {
-    if (myUserId) {
-        set(ref(db, `userData/${myUserId}/${key}`), data);
-    }
+function toggleTheme() {
+    currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+    localStorage.setItem('souqna_theme', currentTheme);
+    applyTheme(currentTheme);
 }
 
-/* ================= TIMER SCRIPT ================= */
-const timerElement = document.getElementById("timer");
-const modeElement = document.getElementById("mode");
-const statusElement = document.getElementById("status");
-const progressBar = document.getElementById("progressBar");
-const crab = document.getElementById("crab");
-
-const startBtn = document.getElementById("startBtn");
-const pauseBtn = document.getElementById("pauseBtn");
-const resetBtn = document.getElementById("resetBtn");
-const themeToggleBtn = document.getElementById("themeToggleBtn");
-const zenModeBtn = document.getElementById("zenModeBtn");
-const exitZenBtn = document.getElementById("exitZenBtn");
-const clearHistoryBtn = document.getElementById("clearHistoryBtn");
-
-const phaseStudyBtn = document.getElementById("phaseStudyBtn");
-const phaseShortBtn = document.getElementById("phaseShortBtn");
-const phaseLongBtn = document.getElementById("phaseLongBtn");
-
-const studyInput = document.getElementById("studyInput");
-const shortInput = document.getElementById("shortInput");
-const longInput = document.getElementById("longInput");
-const sessionsInput = document.getElementById("sessionsInput");
-const alarmInput = document.getElementById("alarmInput");
-const soundSelect = document.getElementById("soundSelect");
-
-const autoBreak = document.getElementById("autoBreak");
-const autoStudy = document.getElementById("autoStudy");
-const notifToggle = document.getElementById("notifToggle");
-
-const completedSessions = document.getElementById("completedSessions");
-const totalStudy = document.getElementById("totalStudy");
-const historyList = document.getElementById("historyList");
-
-const enBtn = document.getElementById("enBtn");
-const arBtn = document.getElementById("arBtn");
-const alarmSound = document.getElementById("alarmSound");
-
-let currentPhase = "study";
-let remainingSeconds = 25 * 60;
-let totalSeconds = 25 * 60;
-let timerInterval = null;
-let isRunning = false;
-let completed = 0;
-let totalStudyMinutes = 0;
-let currentSession = 0;
-let sessionHistory = [];
-
-function getNumber(input, min, max) {
-    let value = parseInt(input.value, 10);
-    if (Number.isNaN(value)) value = min;
-    value = Math.max(min, Math.min(max, value));
-    input.value = value;
-    return value;
-}
-
-function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secondsLeft = seconds % 60;
-    return String(minutes).padStart(2, "0") + ":" + String(secondsLeft).padStart(2, "0");
-}
-
-function getPhaseDuration() {
-    if (currentPhase === "study") return getNumber(studyInput, 1, 180) * 60;
-    if (currentPhase === "short") return getNumber(shortInput, 1, 60) * 60;
-    return getNumber(longInput, 1, 120) * 60;
-}
-
-function updateCrabState() {
-    crab.classList.remove("state-study", "state-short", "state-long", "state-paused");
-    if (!isRunning && remainingSeconds < totalSeconds) {
-        crab.classList.add("state-paused");
+function applyTheme(theme) {
+    const root = document.documentElement;
+    const icon = document.getElementById('themeIcon');
+    if (theme === 'dark') {
+        root.classList.add('dark');
+        icon.className = 'fa-solid fa-sun';
     } else {
-        crab.classList.add(`state-${currentPhase}`);
+        root.classList.remove('dark');
+        icon.className = 'fa-solid fa-moon';
     }
 }
 
-function updateScreen() {
-    timerElement.textContent = formatTime(remainingSeconds);
-    modeElement.textContent = timerTranslations[currentLanguage][currentPhase];
-    completedSessions.textContent = completed;
-    totalStudy.textContent = `${totalStudyMinutes}m`;
-
-    let progress = 0;
-    if (totalSeconds > 0) {
-        progress = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
-    }
-    progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
-
-    phaseStudyBtn.className = currentPhase === "study" ? "flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition" : "flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition";
-    phaseShortBtn.className = currentPhase === "short" ? "flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition" : "flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition";
-    phaseLongBtn.className = currentPhase === "long" ? "flex-1 py-2 rounded-xl font-bold text-sm bg-ocean-dark text-white transition" : "flex-1 py-2 rounded-xl font-bold text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition";
-
-    updateCrabState();
-    document.title = `${formatTime(remainingSeconds)} - MR SALTA3`;
+function toggleLanguage() {
+    currentLang = currentLang === 'ar' ? 'en' : 'ar';
+    localStorage.setItem('souqna_lang', currentLang);
+    applyLanguage(currentLang);
+    renderProducts(products);
 }
 
-function loadPhase(phase) {
-    if (isRunning) pauseTimer();
-    currentPhase = phase;
-    totalSeconds = getPhaseDuration();
-    remainingSeconds = totalSeconds;
-    statusElement.textContent = timerTranslations[currentLanguage].ready;
-    updateScreen();
-}
-
-function playSynthesizedSound(type) {
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        
-        if (type === "digital") {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(800, ctx.currentTime);
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.15);
-        } else if (type === "bell") {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = "triangle";
-            osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-            gain.gain.setValueAtTime(0.5, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 1.2);
-        }
-    } catch (e) {
-        console.log("Web Audio API error", e);
-    }
-}
-
-function playAlarm() {
-    const repetitions = getNumber(alarmInput, 1, 20);
-    const soundType = soundSelect.value;
-    let count = 0;
-
-    function playOnce() {
-        if (count >= repetitions) return;
-        count++;
-
-        if (soundType === "default") {
-            alarmSound.currentTime = 0;
-            const playPromise = alarmSound.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(() => playSynthesizedSound("digital"));
-            }
-            let waitTime = (alarmSound.duration && Number.isFinite(alarmSound.duration)) ? (alarmSound.duration * 1000) + 250 : 1000;
-            setTimeout(playOnce, waitTime);
-        } else {
-            playSynthesizedSound(soundType);
-            setTimeout(playOnce, soundType === "bell" ? 1300 : 400);
-        }
-    }
-    playOnce();
-}
-
-function showNotification(title, body) {
-    if (!notifToggle.checked) return;
-    if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, {
-            body: body,
-            icon: "https://cdn-icons-png.flaticon.com/512/3073/3073992.png"
-        });
-    }
-}
-
-notifToggle.addEventListener("change", function () {
-    if (notifToggle.checked && "Notification" in window) {
-        Notification.requestPermission().then(permission => {
-            if (permission !== "granted") notifToggle.checked = false;
-        });
-    }
-});
-
-function celebrateCrab() {
-    crab.classList.remove("celebrate");
-    void crab.offsetWidth;
-    crab.classList.add("celebrate");
-}
-
-function addHistoryEntry(minutes) {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    sessionHistory.unshift({ time: timeString, minutes: minutes, date: now.toLocaleDateString() });
-    saveHistory();
-    renderHistory();
-}
-
-function renderHistory() {
-    historyList.innerHTML = "";
-    if (sessionHistory.length === 0) {
-        const emptyLi = document.createElement("li");
-        emptyLi.className = "flex justify-center text-gray-400 py-1";
-        emptyLi.textContent = currentLanguage === "ar" ? "لا توجد جلسات اليوم" : "No sessions today";
-        historyList.appendChild(emptyLi);
-        return;
-    }
-
-    sessionHistory.forEach(item => {
-        const li = document.createElement("li");
-        li.className = "flex justify-between items-center p-1.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700";
-        const textSpan = document.createElement("span");
-        textSpan.textContent = `${currentLanguage === "ar" ? "جلسة مذاكرة" : "Study Session"} (${item.minutes}m)`;
-        const timeSpan = document.createElement("span");
-        timeSpan.className = "text-gray-400 font-mono";
-        timeSpan.textContent = item.time;
-        li.appendChild(textSpan);
-        li.appendChild(timeSpan);
-        historyList.appendChild(li);
-    });
-}
-
-function saveHistory() {
-    localStorage.setItem("salta3_history", JSON.stringify(sessionHistory));
-    localStorage.setItem("salta3_completed", completed);
-    localStorage.setItem("salta3_totalMinutes", totalStudyMinutes);
-
-    pushUserDataToCloud("history", {
-        history: sessionHistory,
-        completed: completed,
-        totalMinutes: totalStudyMinutes
-    });
-}
-
-function loadHistory() {
-    const savedHistory = localStorage.getItem("salta3_history");
-    const savedCompleted = localStorage.getItem("salta3_completed");
-    const savedTotal = localStorage.getItem("salta3_totalMinutes");
-    if (savedHistory) sessionHistory = JSON.parse(savedHistory);
-    if (savedCompleted) completed = parseInt(savedCompleted, 10);
-    if (savedTotal) totalStudyMinutes = parseInt(savedTotal, 10);
-    renderHistory();
-}
-
-clearHistoryBtn.addEventListener("click", function () {
-    sessionHistory = [];
-    completed = 0;
-    totalStudyMinutes = 0;
-    saveHistory();
-    renderHistory();
-    updateScreen();
-});
-
-function finishPhase() {
-    isRunning = false;
-    clearInterval(timerInterval);
-    timerInterval = null;
-
-    playAlarm();
-    celebrateCrab();
-
-    if (currentPhase === "study") {
-        completed++;
-        currentSession++;
-        const studyMins = getNumber(studyInput, 1, 180);
-        totalStudyMinutes += studyMins;
-        addHistoryEntry(studyMins);
-
-        const sessionsBeforeLong = getNumber(sessionsInput, 1, 20);
-        showNotification(timerTranslations[currentLanguage].notifStudyFinishTitle, timerTranslations[currentLanguage].notifStudyFinishBody);
-
-        if (currentSession >= sessionsBeforeLong) {
-            currentSession = 0;
-            loadPhase("long");
-        } else {
-            loadPhase("short");
-        }
-
-        if (autoBreak.checked) {
-            statusElement.textContent = timerTranslations[currentLanguage].break;
-            startTimer();
-        } else {
-            statusElement.textContent = timerTranslations[currentLanguage].waiting;
-        }
-        return;
-    }
-
-    showNotification(timerTranslations[currentLanguage].notifBreakFinishTitle, timerTranslations[currentLanguage].notifBreakFinishBody);
-    loadPhase("study");
-
-    if (autoStudy.checked) {
-        statusElement.textContent = timerTranslations[currentLanguage].studying;
-        startTimer();
-    } else {
-        statusElement.textContent = timerTranslations[currentLanguage].waiting;
-    }
-}
-
-function startTimer() {
-    if (isRunning) return;
-    isRunning = true;
-
-    statusElement.textContent = currentPhase === "study" 
-        ? timerTranslations[currentLanguage].studying 
-        : timerTranslations[currentLanguage].break;
-
-    updateCrabState();
-
-    timerInterval = setInterval(() => {
-        if (remainingSeconds > 0) {
-            remainingSeconds--;
-            updateScreen();
-        } else {
-            finishPhase();
-        }
-    }, 1000);
-}
-
-function pauseTimer() {
-    if (!isRunning) return;
-    isRunning = false;
-    clearInterval(timerInterval);
-    timerInterval = null;
-    statusElement.textContent = timerTranslations[currentLanguage].paused;
-    updateCrabState();
-}
-
-function resetTimer() {
-    isRunning = false;
-    clearInterval(timerInterval);
-    timerInterval = null;
-    currentPhase = "study";
-    currentSession = 0;
-    totalSeconds = getPhaseDuration();
-    remainingSeconds = totalSeconds;
-    progressBar.style.width = "0%";
-    crab.classList.remove("celebrate");
-    statusElement.textContent = timerTranslations[currentLanguage].ready;
-    updateScreen();
-}
-
-function settingsChanged() {
-    if (isRunning) return;
-    totalSeconds = getPhaseDuration();
-    remainingSeconds = totalSeconds;
-    updateScreen();
-}
-
-themeToggleBtn.addEventListener("click", function () {
-    document.documentElement.classList.toggle("dark");
-    const isDark = document.documentElement.classList.contains("dark");
-    themeToggleBtn.textContent = isDark ? "☀️" : "🌙";
-    localStorage.setItem("salta3_theme", isDark ? "dark" : "light");
-});
-
-function loadTheme() {
-    if (localStorage.getItem("salta3_theme") === "dark") {
-        document.documentElement.classList.add("dark");
-        themeToggleBtn.textContent = "☀️";
-    }
-}
-
-// Zen Mode Controls - Global Handling
-zenModeBtn.addEventListener("click", () => {
-    document.body.classList.add("zen-mode");
-    exitZenBtn.classList.remove("hidden");
-});
-
-exitZenBtn.addEventListener("click", () => {
-    document.body.classList.remove("zen-mode");
-    exitZenBtn.classList.add("hidden");
-});
-
-document.addEventListener("keydown", function (e) {
-    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") return;
-    if (e.code === "Space") {
-        e.preventDefault();
-        isRunning ? pauseTimer() : startTimer();
-    } else if (e.code === "KeyR") {
-        resetTimer();
-    }
-});
-
-function updateLanguage() {
-    const t = timerTranslations[currentLanguage];
-    document.getElementById("settingsTitle").textContent = t.settings;
-    document.getElementById("studyLabel").textContent = t.studyMinutes;
-    document.getElementById("shortLabel").textContent = t.shortBreak;
-    document.getElementById("longLabel").textContent = t.longBreak;
-    document.getElementById("sessionsLabel").textContent = t.sessions;
-    document.getElementById("alarmLabel").textContent = t.alarm;
-    document.getElementById("soundSelectLabel").textContent = t.soundSelectLabel;
-    document.getElementById("autoBreakTitle").textContent = t.autoBreak;
-    document.getElementById("autoBreakText").textContent = t.autoBreakText;
-    document.getElementById("autoStudyTitle").textContent = t.autoStudy;
-    document.getElementById("autoStudyText").textContent = t.autoStudyText;
-    document.getElementById("notifTitle").textContent = t.notifTitle;
-    document.getElementById("notifText").textContent = t.notifText;
-    document.getElementById("sessionsText").textContent = t.completed;
-    document.getElementById("totalText").textContent = t.total;
-    document.getElementById("historyTitle").textContent = t.historyTitle;
-    document.getElementById("clearHistoryBtn").textContent = t.clearHistory;
-    document.getElementById("exitZenBtn").textContent = t.exitZen;
-    document.getElementById("tipText").textContent = t.tip;
-    startBtn.textContent = t.start;
-    pauseBtn.textContent = t.pause;
-    resetBtn.textContent = t.reset;
-
-    if (!isRunning) statusElement.textContent = t.ready;
-
-    document.documentElement.lang = currentLanguage;
-    document.documentElement.dir = currentLanguage === "ar" ? "rtl" : "ltr";
-
-    if (currentLanguage === "ar") {
-        arBtn.className = "px-3 py-1 text-sm font-bold rounded-full bg-white text-ocean-dark transition";
-        enBtn.className = "px-3 py-1 text-sm font-bold rounded-full text-white hover:bg-white/10 transition";
-    } else {
-        enBtn.className = "px-3 py-1 text-sm font-bold rounded-full bg-white text-ocean-dark transition";
-        arBtn.className = "px-3 py-1 text-sm font-bold rounded-full text-white hover:bg-white/10 transition";
-    }
+function applyLanguage(lang) {
+    const htmlRoot = document.getElementById('htmlRoot');
+    htmlRoot.setAttribute('lang', lang);
+    htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+    document.getElementById('langLabel').innerText = lang === 'ar' ? 'EN' : 'AR';
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (i18n[currentLanguage][key]) {
-            el.textContent = i18n[currentLanguage][key];
+        if (translations[lang][key]) {
+            el.innerText = translations[lang][key];
         }
     });
 
-    renderHistory();
-    updateScreen();
-}
-
-enBtn.addEventListener("click", () => { currentLanguage = "en"; updateLanguage(); });
-arBtn.addEventListener("click", () => { currentLanguage = "ar"; updateLanguage(); });
-
-phaseStudyBtn.addEventListener("click", () => loadPhase("study"));
-phaseShortBtn.addEventListener("click", () => loadPhase("short"));
-phaseLongBtn.addEventListener("click", () => loadPhase("long"));
-
-startBtn.addEventListener("click", startTimer);
-pauseBtn.addEventListener("click", pauseTimer);
-resetBtn.addEventListener("click", resetTimer);
-studyInput.addEventListener("input", settingsChanged);
-shortInput.addEventListener("input", settingsChanged);
-longInput.addEventListener("input", settingsChanged);
-sessionsInput.addEventListener("input", settingsChanged);
-alarmInput.addEventListener("input", () => getNumber(alarmInput, 1, 20));
-
-/* ================= SUMMARIES MODULE ================= */
-let summaries = JSON.parse(localStorage.getItem('salta3_summaries') || '[]');
-
-const openUploadSummaryBtn = document.getElementById('openUploadSummaryBtn');
-const summaryFormCard = document.getElementById('summaryFormCard');
-const cancelSummaryBtn = document.getElementById('cancelSummaryBtn');
-const saveSummaryBtn = document.getElementById('saveSummaryBtn');
-const summariesList = document.getElementById('summariesList');
-
-openUploadSummaryBtn.addEventListener('click', () => summaryFormCard.classList.remove('hidden'));
-cancelSummaryBtn.addEventListener('click', () => summaryFormCard.classList.add('hidden'));
-
-saveSummaryBtn.addEventListener('click', () => {
-    const title = document.getElementById('sumTitle').value.trim();
-    const subject = document.getElementById('sumSubject').value.trim();
-    const content = document.getElementById('sumContent').value.trim();
-    const fileInput = document.getElementById('sumFile');
-
-    if (!title || !subject) return;
-
-    const newSummary = {
-        id: Date.now(),
-        title,
-        subject,
-        content,
-        rating: 5,
-        ratingsCount: 1,
-        date: new Date().toLocaleDateString(),
-        fileName: fileInput.files[0] ? fileInput.files[0].name : null
-    };
-
-    summaries.unshift(newSummary);
-    localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
-    pushUserDataToCloud('summaries', summaries);
-    renderSummaries();
-
-    document.getElementById('sumTitle').value = '';
-    document.getElementById('sumSubject').value = '';
-    document.getElementById('sumContent').value = '';
-    fileInput.value = '';
-    summaryFormCard.classList.add('hidden');
-});
-
-function renderSummaries() {
-    summariesList.innerHTML = '';
-    if (summaries.length === 0) {
-        summariesList.innerHTML = `<div class="col-span-2 text-center text-gray-400 py-8 font-semibold">لا توجد ملخصات مرفوعة بعد. كن أول من يشارك!</div>`;
-        return;
-    }
-
-    summaries.forEach(s => {
-        const card = document.createElement('div');
-        card.className = "bg-slate-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between relative group";
-        card.innerHTML = `
-            <div>
-                <div class="flex justify-between items-start mb-2">
-                    <span class="px-2.5 py-1 bg-ocean/20 text-ocean dark:text-ocean-light rounded-lg text-xs font-bold">${s.subject}</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-gray-400">${s.date}</span>
-                        <button data-delete-summary-id="${s.id}" class="delete-summary-btn text-coral hover:text-coral-dark text-xs font-bold bg-red-100 dark:bg-red-950/40 px-2 py-0.5 rounded-md transition" title="حذف الملخص">🗑️ مسح</button>
-                    </div>
-                </div>
-                <h3 class="font-bold text-ocean-dark dark:text-white text-base mb-1">${s.title}</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-300 mb-3">${s.content}</p>
-                ${s.fileName ? `<div class="text-xs text-ocean font-bold flex items-center gap-1 mb-3">📄 ${s.fileName}</div>` : ''}
-            </div>
-            <div class="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-2 text-xs">
-                <div class="flex items-center gap-1">
-                    <span class="text-amber-400 font-bold">★ ${s.rating.toFixed(1)}</span>
-                    <span class="text-gray-400">(${s.ratingsCount})</span>
-                </div>
-                <button data-rate-id="${s.id}" class="rate-summary-btn text-ocean hover:underline font-bold">قيم هذا الملخص</button>
-            </div>
-        `;
-        summariesList.appendChild(card);
-    });
-
-    document.querySelectorAll('.rate-summary-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = parseInt(e.target.getAttribute('data-rate-id'), 10);
-            rateSummary(id);
-        });
-    });
-
-    document.querySelectorAll('.delete-summary-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = parseInt(e.target.getAttribute('data-delete-summary-id'), 10);
-            deleteSummary(id);
-        });
-    });
-}
-
-function deleteSummary(id) {
-    if (confirm(currentLanguage === 'ar' ? 'هل أنت تأكد من مسح هذا الملخص؟' : 'Are you sure you want to delete this summary?')) {
-        summaries = summaries.filter(s => s.id !== id);
-        localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
-        pushUserDataToCloud('summaries', summaries);
-        renderSummaries();
-    }
-}
-
-function rateSummary(id) {
-    const summary = summaries.find(item => item.id === id);
-    if (summary) {
-        summary.ratingsCount++;
-        summary.rating = Math.min(5, summary.rating + 0.1);
-        localStorage.setItem('salta3_summaries', JSON.stringify(summaries));
-        pushUserDataToCloud('summaries', summaries);
-        renderSummaries();
-    }
-}
-
-/* ================= HABITS MODULE ================= */
-let habits = JSON.parse(localStorage.getItem('salta3_habits') || '[]');
-
-const habitInput = document.getElementById('habitInput');
-const addHabitBtn = document.getElementById('addHabitBtn');
-const habitsList = document.getElementById('habitsList');
-
-addHabitBtn.addEventListener('click', () => {
-    const name = habitInput.value.trim();
-    if (!name) return;
-    habits.push({ id: Date.now(), name, done: false });
-    localStorage.setItem('salta3_habits', JSON.stringify(habits));
-    pushUserDataToCloud('habits', habits);
-    habitInput.value = '';
-    renderHabits();
-});
-
-function renderHabits() {
-    habitsList.innerHTML = '';
-    if (habits.length === 0) {
-        habitsList.innerHTML = `<div class="text-center text-gray-400 py-6 font-semibold">لم تقم بإضافة أي عادات بعد.</div>`;
-        return;
-    }
-
-    habits.forEach(h => {
-        const item = document.createElement('div');
-        item.className = "flex items-center justify-between p-3.5 bg-slate-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700";
-        item.innerHTML = `
-            <div class="flex items-center gap-3">
-                <input type="checkbox" ${h.done ? 'checked' : ''} data-habit-id="${h.id}" class="toggle-habit-chk w-5 h-5 accent-ocean rounded cursor-pointer">
-                <span class="font-bold text-sm ${h.done ? 'line-through text-gray-400' : 'text-ocean-dark dark:text-white'}">${h.name}</span>
-            </div>
-            <button data-delete-id="${h.id}" class="delete-habit-btn text-coral hover:text-coral-dark text-xs font-bold">حذف</button>
-        `;
-        habitsList.appendChild(item);
-    });
-
-    document.querySelectorAll('.toggle-habit-chk').forEach(chk => {
-        chk.addEventListener('change', (e) => {
-            const id = parseInt(e.target.getAttribute('data-habit-id'), 10);
-            toggleHabit(id);
-        });
-    });
-
-    document.querySelectorAll('.delete-habit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = parseInt(e.target.getAttribute('data-delete-id'), 10);
-            deleteHabit(id);
-        });
-    });
-}
-
-function toggleHabit(id) {
-    const h = habits.find(item => item.id === id);
-    if (h) {
-        h.done = !h.done;
-        localStorage.setItem('salta3_habits', JSON.stringify(habits));
-        pushUserDataToCloud('habits', habits);
-        renderHabits();
-    }
-}
-
-function deleteHabit(id) {
-    habits = habits.filter(item => item.id !== id);
-    localStorage.setItem('salta3_habits', JSON.stringify(habits));
-    pushUserDataToCloud('habits', habits);
-    renderHabits();
-}
-
-/* ================= PRIVATE GROUPS MODULE ================= */
-let myJoinedGroupCodes = JSON.parse(localStorage.getItem('salta3_joined_codes') || '[]');
-let activeGroupCode = null;
-let currentGroupData = null;
-
-const openCreateGroupBtn = document.getElementById('openCreateGroupBtn');
-const createGroupCard = document.getElementById('createGroupCard');
-const cancelCreateGroupBtn = document.getElementById('cancelCreateGroupBtn');
-const saveCreateGroupBtn = document.getElementById('saveCreateGroupBtn');
-const joinGroupBtn = document.getElementById('joinGroupBtn');
-const joinCodeInput = document.getElementById('joinCodeInput');
-const myGroupsList = document.getElementById('myGroupsList');
-
-const noGroupSelected = document.getElementById('noGroupSelected');
-const activeGroupContent = document.getElementById('activeGroupContent');
-const chatGroupName = document.getElementById('chatGroupName');
-const chatGroupCode = document.getElementById('chatGroupCode');
-const chatMessages = document.getElementById('chatMessages');
-const chatInput = document.getElementById('chatInput');
-const sendChatBtn = document.getElementById('sendChatBtn');
-const leaveGroupBtn = document.getElementById('leaveGroupBtn');
-const adminMuteBtn = document.getElementById('adminMuteBtn');
-const chatMutedNotice = document.getElementById('chatMutedNotice');
-
-openCreateGroupBtn.addEventListener('click', () => createGroupCard.classList.remove('hidden'));
-cancelCreateGroupBtn.addEventListener('click', () => createGroupCard.classList.add('hidden'));
-
-function getUserName() {
-    if (!currentUserName) {
-        currentUserName = prompt(currentLanguage === 'ar' ? 'أدخل اسمك للظهور في الدردشة:' : 'Enter your name for the chat:') || 'طالب';
-        localStorage.setItem('salta3_username', currentUserName);
-    }
-    return currentUserName;
-}
-
-saveCreateGroupBtn.addEventListener('click', async () => {
-    const name = document.getElementById('newGroupName').value.trim();
-    if (!name) return;
-
-    const code = 'SALTA3-' + Math.floor(1000 + Math.random() * 9000);
-    const groupRef = ref(db, 'groups/' + code);
-
-    const initialMsgKey = Date.now();
-    const newGroupData = {
-        name: name,
-        code: code,
-        createdBy: myUserId,
-        isMuted: false,
-        messages: {
-            [initialMsgKey]: {
-                sender: 'MR SALTA3 Bot',
-                text: `مرحباً بكم في مجموعة ${name}! 🎉`,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[lang][key]) {
+            el.setAttribute('placeholder', translations[lang][key]);
         }
-    };
+    });
+}
 
-    await set(groupRef, newGroupData);
+function switchView(viewName) {
+    document.getElementById('homeView').classList.add('hidden');
+    document.getElementById('productDetailView').classList.add('hidden');
+    document.getElementById('addProductView').classList.add('hidden');
+    document.getElementById('dashboardView').classList.add('hidden');
 
-    if (!myJoinedGroupCodes.includes(code)) {
-        myJoinedGroupCodes.push(code);
-        localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
-        pushUserDataToCloud('groups', myJoinedGroupCodes);
+    if (viewName === 'home') {
+        document.getElementById('homeView').classList.remove('hidden');
+    } else if (viewName === 'productDetail') {
+        document.getElementById('productDetailView').classList.remove('hidden');
+    } else if (viewName === 'addProduct') {
+        document.getElementById('addProductView').classList.remove('hidden');
+        selectedProductImages = [];
+        document.getElementById('imagePreviewContainer').innerHTML = '';
+    } else if (viewName === 'dashboard') {
+        document.getElementById('dashboardView').classList.remove('hidden');
+        renderSellerDashboard();
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-    document.getElementById('newGroupName').value = '';
-    createGroupCard.classList.add('hidden');
-    renderGroups();
-    selectGroup(code);
-});
-
-joinGroupBtn.addEventListener('click', async () => {
-    const code = joinCodeInput.value.trim().toUpperCase();
-    if (!code) return;
-
-    const dbRef = ref(db);
-    const snapshot = await get(child(dbRef, `groups/${code}`));
-
-    if (snapshot.exists()) {
-        if (!myJoinedGroupCodes.includes(code)) {
-            myJoinedGroupCodes.push(code);
-            localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
-            pushUserDataToCloud('groups', myJoinedGroupCodes);
-        }
-        joinCodeInput.value = '';
-        renderGroups();
-        selectGroup(code);
+function toggleSupportWidget() {
+    const box = document.getElementById('supportWidgetBox');
+    if (box.classList.contains('hidden')) {
+        box.classList.remove('hidden');
+        setTimeout(() => {
+            box.classList.remove('scale-95', 'opacity-0');
+            box.classList.add('scale-100', 'opacity-100');
+        }, 10);
     } else {
-        alert(currentLanguage === 'ar' ? 'رمز المجموعة غير صحيح!' : 'Invalid Group Code!');
+        box.classList.remove('scale-100', 'opacity-100');
+        box.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            box.classList.add('hidden');
+        }, 300);
     }
-});
-
-function renderGroups() {
-    myGroupsList.innerHTML = '';
-    if (myJoinedGroupCodes.length === 0) {
-        myGroupsList.innerHTML = `<div class="text-xs text-gray-400 py-2">لا تنتمي لأي مجموعة حالياً.</div>`;
-        return;
-    }
-
-    myJoinedGroupCodes.forEach(code => {
-        const groupRef = ref(db, 'groups/' + code);
-        onValue(groupRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                let existingBtn = document.getElementById(`group-btn-${code}`);
-                if (!existingBtn) {
-                    existingBtn = document.createElement('button');
-                    existingBtn.id = `group-btn-${code}`;
-                    myGroupsList.appendChild(existingBtn);
-                }
-                existingBtn.className = `w-full text-right p-2.5 rounded-xl text-xs font-bold flex justify-between items-center transition ${activeGroupCode === code ? 'bg-ocean text-white' : 'bg-slate-100 dark:bg-gray-800 text-ocean-dark dark:text-white hover:bg-slate-200'}`;
-                existingBtn.innerHTML = `<span>${data.name}</span><span class="font-mono text-[10px] opacity-70">${data.code}</span>`;
-                existingBtn.onclick = () => selectGroup(code);
-            }
-        });
-    });
 }
 
-function selectGroup(code) {
-    activeGroupCode = code;
-    renderGroups();
-
-    const groupRef = ref(db, 'groups/' + code);
-
-    onValue(groupRef, (snapshot) => {
-        const g = snapshot.val();
-        if (!g) return;
-        currentGroupData = g;
-
-        noGroupSelected.classList.add('hidden');
-        activeGroupContent.classList.remove('hidden');
-
-        chatGroupName.textContent = g.name;
-        chatGroupCode.textContent = `رمز الانضمام: ${g.code}`;
-
-        const isAdmin = (g.createdBy === myUserId);
-        if (isAdmin) {
-            adminMuteBtn.classList.remove('hidden');
-            adminMuteBtn.textContent = g.isMuted ? '🔊 إلغاء الكتم' : '🔇 كتم الدردشة';
-        } else {
-            adminMuteBtn.classList.add('hidden');
-        }
-
-        if (g.isMuted) {
-            chatInput.disabled = true;
-            sendChatBtn.disabled = true;
-            sendChatBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            chatMutedNotice.classList.remove('hidden');
-        } else {
-            chatInput.disabled = false;
-            sendChatBtn.disabled = false;
-            sendChatBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            chatMutedNotice.classList.add('hidden');
-        }
-
-        renderMessages(g.messages);
-    });
-}
-
-leaveGroupBtn.addEventListener('click', () => {
-    if (!activeGroupCode) return;
-    if (confirm(currentLanguage === 'ar' ? 'هل أنت تأكد من مغادرة ومسح هذه المجموعة من قائمتك؟' : 'Are you sure you want to leave and remove this group from your list?')) {
-        myJoinedGroupCodes = myJoinedGroupCodes.filter(c => c !== activeGroupCode);
-        localStorage.setItem('salta3_joined_codes', JSON.stringify(myJoinedGroupCodes));
-        pushUserDataToCloud('groups', myJoinedGroupCodes);
-
-        activeGroupCode = null;
-        currentGroupData = null;
-        
-        activeGroupContent.classList.add('hidden');
-        noGroupSelected.classList.remove('hidden');
-        
-        renderGroups();
-    }
-});
-
-adminMuteBtn.addEventListener('click', async () => {
-    if (!activeGroupCode || !currentGroupData) return;
-    const isCurrentlyMuted = currentGroupData.isMuted || false;
-    const groupRef = ref(db, 'groups/' + activeGroupCode);
-    await update(groupRef, { isMuted: !isCurrentlyMuted });
-});
-
-function renderMessages(messagesObj) {
-    chatMessages.innerHTML = '';
-    if (!messagesObj) return;
-
-    const messagesArray = Object.values(messagesObj);
-
-    messagesArray.forEach(m => {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = "bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 max-w-[85%]";
-        msgDiv.innerHTML = `
-            <div class="flex justify-between items-center gap-4 mb-1">
-                <strong class="text-[11px] text-ocean dark:text-ocean-light">${m.sender}</strong>
-                <span class="text-[9px] text-gray-400">${m.time}</span>
-            </div>
-            <p class="text-xs text-gray-700 dark:text-gray-200">${m.text}</p>
-        `;
-        chatMessages.appendChild(msgDiv);
-    });
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-sendChatBtn.addEventListener('click', () => {
-    if (currentGroupData && currentGroupData.isMuted) return;
-    const text = chatInput.value.trim();
-    if (!text || !activeGroupCode) return;
-
-    const userName = getUserName();
-    const messagesRef = ref(db, `groups/${activeGroupCode}/messages`);
-    push(messagesRef, {
-        sender: userName,
-        text: text,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    });
-
-    chatInput.value = '';
-});
-
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        sendChatBtn.click();
-    }
-});
-
-document.getElementById('copyInviteLinkBtn').addEventListener('click', () => {
-    if (activeGroupCode) {
-        navigator.clipboard.writeText(activeGroupCode).then(() => {
-            alert(currentLanguage === 'ar' ? 'تم نسخ رمز المجموعة للحافظة!' : 'Group code copied to clipboard!');
-        }).catch(() => {
-            const dummy = document.createElement("input");
-            document.body.appendChild(dummy);
-            dummy.value = activeGroupCode;
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
-            alert(currentLanguage === 'ar' ? 'تم نسخ رمز المجموعة للحافظة!' : 'Group code copied to clipboard!');
-        });
-    }
-});
-
-/* ================= CONTACT FORM MODULE ================= */
-document.getElementById('contactForm').addEventListener('submit', function(e) {
+function submitSupportTicket(e) {
     e.preventDefault();
+    const name = document.getElementById('supportName').value;
+    const email = document.getElementById('supportEmail').value;
+    const message = document.getElementById('supportMessage').value;
+    const submitBtn = document.getElementById('supportSubmitBtn');
 
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.textContent = 'جاري الإرسال...';
     submitBtn.disabled = true;
+    submitBtn.innerText = "جاري الإرسال...";
 
     const templateParams = {
-        from_name: document.getElementById('cName').value,
-        reply_to: document.getElementById('cEmail').value,
-        message: document.getElementById('cMessage').value
+        from_name: name,
+        from_email: email,
+        message: message,
+        to_name: "مدير الموقع"
     };
 
-    emailjs.send('service_xh7i5tn', 'template_k2xj7fk', templateParams)
-        .then(() => {
-            document.getElementById('contactSuccessMsg').classList.remove('hidden');
-            submitBtn.textContent = 'إرسال الرسالة';
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+        .then(function(response) {
+            showToast(`شكراً لك يا ${name}، تم إرسال رسالتك لبريدك الشخصي بنجاح!`);
+            document.getElementById('supportForm').reset();
+            toggleSupportWidget();
             submitBtn.disabled = false;
-            this.reset();
-
-            setTimeout(() => {
-                document.getElementById('contactSuccessMsg').classList.add('hidden');
-            }, 4000);
-        }, (error) => {
-            alert('حدث خطأ أثناء الإرسال، يرجى التأكد من البيانات والمحاولة مجدداً.');
-            console.error('EmailJS Error Details:', error);
-            submitBtn.textContent = 'إرسال الرسالة';
+            submitBtn.innerText = "إرسال الشكوى للدعم";
+        }, function(error) {
+            console.error('EmailJS Error:', error);
+            showToast("حدث خطأ أثناء الإرسال.", "error");
             submitBtn.disabled = false;
+            submitBtn.innerText = "إرسال الشكوى للدعم";
         });
-});
-
-/* INITIALIZE ALL COMPONENTS */
-function initializeAppMain() {
-    totalSeconds = getPhaseDuration();
-    remainingSeconds = totalSeconds;
-    loadTheme();
-    loadHistory();
-    renderSummaries();
-    renderHabits();
-    renderGroups();
-    updateLanguage();
-    updateScreen();
 }
 
-initializeAppMain();
+function handleImageSelection(e) {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    if (selectedProductImages.length + files.length > 6) {
+        showToast(currentLang === 'ar' ? "عذراً، الحد الأقصى المسموح به هو 6 صور فقط!" : "Maximum 6 images allowed!");
+        return;
+    }
+
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(uploadEvent) {
+            selectedProductImages.push(uploadEvent.target.result);
+            renderImagePreviews();
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function renderImagePreviews() {
+    const container = document.getElementById('imagePreviewContainer');
+    container.innerHTML = selectedProductImages.map((imgSrc, index) => `
+        <div class="relative rounded-xl overflow-hidden h-20 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group">
+            <img src="${imgSrc}" class="w-full h-full object-cover">
+            <button type="button" onclick="removeSelectedImage(${index})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow hover:bg-red-700 transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeSelectedImage(index) {
+    selectedProductImages.splice(index, 1);
+    renderImagePreviews();
+}
+
+function renderProducts(list) {
+    const grid = document.getElementById('productsGrid');
+    document.getElementById('productCountBadge').innerText = list.length + (currentLang === 'ar' ? ' إعلان' : ' Ads');
+    
+    if (list.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-400 font-bold">${translations[currentLang].emptyAdsMsg}</div>`;
+        return;
+    }
+
+    grid.innerHTML = list.map(p => {
+        const mainImg = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'https://placehold.co/600x400/e2e8f0/475569?text=Product');
+        return `
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col justify-between group cursor-pointer" onclick="openProductDetail(${p.id})">
+                <div class="h-48 overflow-hidden relative bg-slate-100 dark:bg-slate-800">
+                    <img src="${mainImg}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/600x400/e2e8f0/475569?text=Product'">
+                    <span class="absolute top-3 right-3 bg-indigo-600/95 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                        ${getCategoryDisplayName(p.category)}
+                    </span>
+                </div>
+                <div class="p-5 space-y-3 flex-grow flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs text-slate-500 dark:text-slate-400"><i class="fa-solid fa-location-dot"></i> ${p.location}</span>
+                            <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded">${p.condition}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-base line-clamp-1 group-hover:text-indigo-600 transition">${p.title}</h4>
+                    </div>
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <div>
+                            <span class="text-xs text-slate-400 block">${currentLang === 'ar' ? 'السعر' : 'Price'}</span>
+                            <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">${Number(p.price).toLocaleString()} ${currentLang === 'ar' ? 'ج.م' : 'EGP'}</span>
+                        </div>
+                        <button class="bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-comments"></i> ${currentLang === 'ar' ? 'تفاصيل وشات' : 'Chat & Details'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getCategoryDisplayName(cat) {
+    const map = {
+        laptops: translations[currentLang].catLaptops,
+        phones: translations[currentLang].catPhones,
+        cars: translations[currentLang].catCars,
+        realestate: translations[currentLang].catRealEstate
+    };
+    return map[cat] || cat;
+}
+
+function filterProducts() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const cat = document.getElementById('categoryFilterSelect').value;
+
+    const filtered = products.filter(p => {
+        const matchQuery = p.title.toLowerCase().includes(query) || p.description.toLowerCase().includes(query);
+        const matchCat = (cat === 'all' || p.category === cat);
+        return matchQuery && matchCat;
+    });
+    renderProducts(filtered);
+}
+
+function filterByCategory(cat) {
+    document.getElementById('categoryFilterSelect').value = cat;
+    filterProducts();
+    switchView('home');
+}
+
+function openProductDetail(id) {
+    activeProductId = id;
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+
+    const imagesList = (p.images && p.images.length > 0) ? p.images : [p.image || 'https://placehold.co/600x400/e2e8f0/475569?text=Product'];
+
+    document.getElementById('detailImage').src = imagesList[0];
+    document.getElementById('detailCategoryBadge').innerText = getCategoryDisplayName(p.category);
+    document.getElementById('detailTitle').innerText = p.title;
+    document.getElementById('detailPrice').innerText = Number(p.price).toLocaleString() + (currentLang === 'ar' ? ' ج.م' : ' EGP');
+    document.getElementById('detailLocation').innerText = p.location;
+    document.getElementById('detailCondition').innerText = p.condition;
+    document.getElementById('detailDescription').innerText = p.description;
+    document.getElementById('sellerName').innerText = p.sellerName || 'بائع معتمد';
+    document.getElementById('sellerInitial').innerText = (p.sellerName || 'ب').charAt(0);
+
+    const thumbContainer = document.getElementById('detailThumbnailsContainer');
+    if (imagesList.length > 1) {
+        thumbContainer.innerHTML = imagesList.map((imgSrc, idx) => `
+            <div onclick="document.getElementById('detailImage').src='${imgSrc}'" class="w-16 h-16 rounded-xl overflow-hidden border-2 border-transparent hover:border-indigo-600 cursor-pointer bg-slate-100 flex-shrink-0">
+                <img src="${imgSrc}" class="w-full h-full object-cover">
+            </div>
+        `).join('');
+    } else {
+        thumbContainer.innerHTML = '';
+    }
+
+    const waPhone = p.sellerPhone || '201000000000';
+    const waMsg = encodeURIComponent(`مرحباً، أنا مهتم بالإعلان الخاص بك على موقع سُوقنا: ${p.title}`);
+    document.getElementById('whatsappBtn').href = `https://wa.me/${waPhone}?text=${waMsg}`;
+
+    renderChatMessages();
+    switchView('productDetail');
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('chatMessagesContainer');
+    if (!productChats[activeProductId]) {
+        productChats[activeProductId] = [];
+    }
+    const messages = productChats[activeProductId];
+    const messagesArray = Array.isArray(messages) ? messages : Object.values(messages);
+
+    if (messagesArray.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6 font-semibold">${translations[currentLang].noChatsMsg}</div>`;
+        return;
+    }
+
+    container.innerHTML = messagesArray.map(msg => {
+        const isMine = currentUser && msg.senderEmail === currentUser.email;
+        return `
+            <div class="flex flex-col ${isMine ? 'items-end' : 'items-start'} space-y-1">
+                <div class="max-w-[80%] rounded-2xl px-4 py-2.5 text-xs shadow-sm ${isMine ? 'bg-indigo-600 text-white rounded-bl-none' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-br-none'}">
+                    <p class="font-bold text-[10px] opacity-75 mb-0.5">${msg.senderName}</p>
+                    <p class="leading-relaxed">${msg.text}</p>
+                </div>
+                <span class="text-[9px] text-slate-400 px-1">${msg.time}</span>
+            </div>
+        `;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+    if (!currentUser) {
+        showToast(currentLang === 'ar' ? "يجب تسجيل الدخول أولاً لإرسال رسالة!" : "Please login first to chat!");
+        openAuthModal('login');
+        return;
+    }
+
+    const input = document.getElementById('chatInputMessage');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    const newMsg = {
+        senderEmail: currentUser.email,
+        senderName: currentUser.fullName,
+        text: text,
+        time: timeStr
+    };
+
+    dbRef.ref('chats/' + activeProductId).push(newMsg);
+    input.value = '';
+}
+
+function checkAuthAndOpen(view) {
+    if (!currentUser) {
+        showToast(currentLang === 'ar' ? "يجب تسجيل الدخول أولاً للمتابعة ونشر المنتجات!" : "Please login first to proceed!");
+        openAuthModal('login');
+        return;
+    }
+    switchView(view);
+}
+
+function handleAddNewProduct(e) {
+    e.preventDefault();
+    if (!currentUser) {
+        showToast("يجب تسجيل الدخول أولاً");
+        return;
+    }
+
+    if (selectedProductImages.length === 0) {
+        showToast(currentLang === 'ar' ? "يرجى رفع صورة واحدة على الأقل للمنتج!" : "Please upload at least one image!");
+        return;
+    }
+
+    const publishBtn = document.getElementById('publishBtn');
+    publishBtn.disabled = true;
+    publishBtn.innerText = "جاري النشر أونلاين...";
+
+    const newId = Date.now();
+    const newProd = {
+        id: newId,
+        title: document.getElementById('newTitle').value,
+        category: document.getElementById('newCategory').value,
+        price: Number(document.getElementById('newPrice').value),
+        condition: document.getElementById('newCondition').value,
+        location: document.getElementById('newLocation').value,
+        images: selectedProductImages,
+        image: selectedProductImages[0],
+        description: document.getElementById('newDescription').value,
+        sellerEmail: currentUser.email,
+        sellerName: currentUser.fullName,
+        sellerPhone: currentUser.phone
+    };
+
+    // رفع المنتج لقاعدة البيانات أونلاين لكي يراه الجميع
+    dbRef.ref('products/' + newId).set(newProd)
+        .then(() => {
+            // إضافة رسالة ترحيبية أولية بالشات
+            const initialChat = {
+                senderEmail: currentUser.email,
+                senderName: currentUser.fullName,
+                text: currentLang === 'ar' ? "مرحباً بكم، هذا المنتج متاح الآن وجاهز للمعاينة والشراء عبر المنصة بنظام العمولة." : "Hello, this product is available for purchase.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            dbRef.ref('chats/' + newId).push(initialChat);
+
+            showToast(currentLang === 'ar' ? "تم نشر إعلانك أونلاين بنجاح لكل الزوار!" : "Ad published online successfully!");
+            document.getElementById('addProductForm').reset();
+            selectedProductImages = [];
+            document.getElementById('imagePreviewContainer').innerHTML = '';
+            publishBtn.disabled = false;
+            publishBtn.innerText = "نشر الإعلان الآن";
+            switchView('home');
+        })
+        .catch((error) => {
+            console.error(error);
+            showToast("حدث خطأ أثناء النشر أونلاين.", "error");
+            publishBtn.disabled = false;
+            publishBtn.innerText = "نشر الإعلان الآن";
+        });
+}
+
+function openAuthModal(mode) {
+    currentAuthMode = mode;
+    const modal = document.getElementById('authModal');
+    const title = document.getElementById('authModalTitle');
+    const extraFields = document.getElementById('registerExtraFields');
+    const toggleText = document.getElementById('authToggleText');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    
+    document.getElementById('authForm').reset();
+
+    if (mode === 'login') {
+        title.innerText = currentLang === 'ar' ? "تسجيل الدخول" : "Login";
+        submitBtn.innerText = currentLang === 'ar' ? "تسجيل الدخول" : "Login";
+        extraFields.classList.add('hidden');
+        toggleText.innerHTML = `${currentLang === 'ar' ? 'ليس لديك حساب؟' : "Don't have an account?"} <button onclick="toggleAuthMode()" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">${currentLang === 'ar' ? 'أنشئ حساباً جديداً' : 'Register'}</button>`;
+    } else {
+        title.innerText = currentLang === 'ar' ? "إنشاء حساب جديد" : "Create Account";
+        submitBtn.innerText = currentLang === 'ar' ? "إنشاء الحساب ودخول" : "Register & Login";
+        extraFields.classList.remove('hidden');
+        toggleText.innerHTML = `${currentLang === 'ar' ? 'لديك حساب بالفعل؟' : 'Already have an account?'} <button onclick="toggleAuthMode()" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">${currentLang === 'ar' ? 'تسجيل الدخول' : 'Login'}</button>`;
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeAuthModal() {
+    document.getElementById('authModal').classList.add('hidden');
+}
+
+function toggleAuthMode() {
+    openAuthModal(currentAuthMode === 'login' ? 'register' : 'login');
+}
+
+function handleAuthSubmit(e) {
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value;
+
+    if (currentAuthMode === 'register') {
+        currentUser = {
+            email,
+            fullName: document.getElementById('authFullName').value || "عميل موثق",
+            phone: document.getElementById('authPhone').value || "201012345678"
+        };
+        showToast(currentLang === 'ar' ? "تم إنشاء الحساب وتسجيل الدخول بنجاح!" : "Account created successfully!");
+    } else {
+        currentUser = {
+            email,
+            fullName: email.split('@')[0],
+            phone: "201012345678"
+        };
+        showToast(currentLang === 'ar' ? "تم تسجيل الدخول بنجاح!" : "Logged in successfully!");
+    }
+
+    localStorage.setItem('souqna_user', JSON.stringify(currentUser));
+    closeAuthModal();
+    checkSessionState();
+}
+
+function checkSessionState() {
+    const headerSection = document.getElementById('authHeaderSection');
+    if (currentUser) {
+        headerSection.innerHTML = `
+            <div class="flex items-center gap-3">
+                <button onclick="switchView('dashboard')" class="bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+                    <i class="fa-solid fa-gauge-high"></i> <span data-i18n="navDashboard">لوحة التحكم</span>
+                </button>
+                <div class="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-sm shadow">
+                    ${currentUser.fullName.charAt(0)}
+                </div>
+                <button onclick="handleLogout()" class="text-slate-400 hover:text-red-600 text-sm" title="خروج">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        `;
+    } else {
+        headerSection.innerHTML = `
+            <button onclick="openAuthModal('login')" class="px-4 py-2 text-indigo-600 dark:text-indigo-400 font-bold hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-xl transition text-sm">
+                ${translations[currentLang].btnLogin}
+            </button>
+            <button onclick="openAuthModal('register')" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl shadow-md shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition text-sm">
+                ${translations[currentLang].btnRegister}
+            </button>
+        `;
+    }
+}
+
+function handleLogout() {
+    currentUser = null;
+    localStorage.removeItem('souqna_user');
+    checkSessionState();
+    switchView('home');
+    showToast(currentLang === 'ar' ? "تم تسجيل الخروج بنجاح." : "Logged out successfully.");
+}
+
+function renderSellerDashboard() {
+    if (!currentUser) return;
+    const myProds = products.filter(p => p.sellerEmail === currentUser.email);
+    document.getElementById('statMyProductsCount').innerText = myProds.length;
+
+    let chatCount = 0;
+    myProds.forEach(p => {
+        if (productChats[p.id]) {
+            chatCount += Object.keys(productChats[p.id]).length;
+        }
+    });
+    document.getElementById('statActiveChatsCount').innerText = chatCount;
+    
+    const container = document.getElementById('myProductsListContainer');
+    if (myProds.length === 0) {
+        container.innerHTML = `<div class="text-center text-xs text-slate-400 py-6">${currentLang === 'ar' ? 'ليس لديك أي إعلانات منشورة حتى الآن.' : 'You have no listed products yet.'}</div>`;
+        return;
+    }
+
+    container.innerHTML = myProds.map(p => {
+        const thumb = (p.images && p.images[0]) ? p.images[0] : (p.image || 'https://placehold.co/100x100');
+        return `
+            <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-4">
+                    <img src="${thumb}" class="w-16 h-16 object-cover rounded-xl" onerror="this.src='https://placehold.co/100x100'">
+                    <div>
+                        <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">${p.title}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${p.location} • <span class="text-emerald-600 dark:text-emerald-400 font-bold">${Number(p.price).toLocaleString()} ${currentLang === 'ar' ? 'ج.م' : 'EGP'}</span></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openProductDetail(${p.id})" class="bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-comments"></i> ${currentLang === 'ar' ? 'الشات' : 'Chat'}
+                    </button>
+                    <button onclick="deleteProduct(${p.id})" class="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function deleteProduct(id) {
+    dbRef.ref('products/' + id).remove()
+        .then(() => {
+            dbRef.ref('chats/' + id).remove();
+            showToast(currentLang === 'ar' ? "تم حذف الإعلان بنجاح أونلاين" : "Ad deleted successfully online");
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("حدث خطأ أثناء الحذف.", "error");
+        });
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toastNotification');
+    const msg = document.getElementById('toastMessage');
+    msg.innerText = message;
+    
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+    }, 4000);
+}
